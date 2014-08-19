@@ -6,6 +6,7 @@ import java.io.FilenameFilter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import com.badlogic.gdx.ApplicationListener;
@@ -35,7 +36,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
+import dollarN.Multistroke;
 import dollarN.NBestList;
 import dollarN.NDollarParameters;
 import dollarN.NDollarRecognizer;
@@ -60,6 +63,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 	Button paintBtn,grabBtn;
 	Skin skin;
 	Label fpsLabel;
+	Label resultLabel;
 	NDollarRecognizer _rec = null;
 	Boolean grab=false,paint=false;
 	
@@ -91,6 +95,10 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		fpsLabel = new Label("fps:", skin);
 		stage = new Stage();
 		fpsLabel.setPosition(0, Gdx.graphics.getHeight()-fpsLabel.getHeight());
+		
+		resultLabel = new Label("Result:", skin);
+		resultLabel.setPosition(200, Gdx.graphics.getHeight()-fpsLabel.getHeight());
+		
 
 		Window window = new Window("Tools",skin);
 		window.setPosition(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -99,9 +107,9 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		paintBtn=new Button(skin);
 		paintBtn.add("Paint");
 		paintBtn.setColor(1, 0, 0, 1);
-		paintBtn.setPosition(300, 100); //** Button location **//
-		paintBtn.setHeight(100); //** Button Height **//
-		paintBtn.setWidth(100); //** Button Width **//
+		paintBtn.setPosition(300*Gdx.graphics.getDensity(), 100*Gdx.graphics.getDensity()); //** Button location **//
+		paintBtn.setHeight(80*Gdx.graphics.getDensity()); //** Button Height **//
+		paintBtn.setWidth(80*Gdx.graphics.getDensity()); //** Button Width **//
 		paintBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -114,9 +122,9 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		grabBtn=new Button(skin);
 		grabBtn.add("Grab");
 		grabBtn.setColor(0, 0, 1, 1);
-		grabBtn.setPosition(100, 100); //** Button location **//
-		grabBtn.setHeight(100); //** Button Height **//
-		grabBtn.setWidth(100); //** Button Width **//
+		grabBtn.setPosition(100*Gdx.graphics.getDensity(), 200*Gdx.graphics.getDensity()); //** Button location **//
+		grabBtn.setHeight(80*Gdx.graphics.getDensity()); //** Button Height **//
+		grabBtn.setWidth(80*Gdx.graphics.getDensity()); //** Button Width **//
 		grabBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -133,6 +141,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		stage.addActor(grabBtn);
 		stage.addActor(paintBtn);
 		stage.addActor(fpsLabel);
+		stage.addActor(resultLabel);
 		InputMultiplexer multiplexer = new InputMultiplexer();
 		multiplexer.addProcessor(this);
 		multiplexer.addProcessor(new GestureDetector(this));
@@ -140,7 +149,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		Gdx.input.setInputProcessor(multiplexer);
 
 
-
+		//Viewport viewport = new FitViewport(worldWidth, worldHeight, camera);  
 
 		sketch= new ArrayList<Sprite>();
 		drawingData= new ArrayList<Vector2>();
@@ -162,8 +171,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 
 	@Override
 	public void resize(int width, int height) {
-		// TODO Auto-generated method stub
-
+		stage.getViewport().update(width, height);
 	}
 
 	@Override
@@ -171,8 +179,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		Gdx.gl.glClearColor(1, 1, 1, 1);
-
-
+//		/Gdx.gl.glViewport(Gdx.graphics.getHeight()/2,  Gdx.graphics.getWidth()/2, 800,400);
 		fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond() + " || RAM: "+Gdx.app.getNativeHeap()/131072 +"MB");
 		batch.setProjectionMatrix(cam.combined);
 		batch.begin();
@@ -182,7 +189,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		}
 		batch.end();
 
-		stage.act();
+		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
 
 		cam.update();
@@ -199,6 +206,12 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 
 	@Override
 	public void dispose() {
+		batch.dispose();
+		colour.dispose();
+		colourDebug.dispose();
+		background.dispose();
+		stage.dispose();
+		
 	}
 
 	@Override
@@ -245,9 +258,11 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 			System.out.println(resultTxt);
 			points.clear();
 		}
+		//Wipe current set for next gesture
 		points.clear();
 		sketch.clear();
 		drawingData.clear();
+		strokes.clear();
 		return false;
 	}
 
@@ -298,8 +313,8 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 			//Gdx.app.log("Angle", angle+"");
 			float steps=0;
 			//TODO Should probably take current sprite(s) and merge them into one for massive performance increase
-			pixel=new Sprite(new Texture(colour), 4,4);
-			Sprite debug=new Sprite(new Texture(colour), 10, (int) Math.ceil(c));
+		//	pixel=new Sprite(new Texture(colour), (int) (10*Gdx.graphics.getDensity()), (int) (10*Gdx.graphics.getDensity()));
+			Sprite debug=new Sprite(new Texture(colour), (int)(50*Gdx.graphics.getDensity()), (int) Math.ceil(c));
 			tp = new Vector3(screenX, screenY,0);
 
 			cam.unproject(tp);
@@ -310,10 +325,10 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 			debug.flip(true, false);
 			sketch.add(debug);
 
-			Sprite debug2=new Sprite(new Texture(colourDebug), 10, 10);
+			//Sprite debug2=new Sprite(new Texture(colourDebug), (int) (10*Gdx.graphics.getDensity()), (int) (10*Gdx.graphics.getDensity()));
 			tp = new Vector3(screenX, screenY,0);
 			cam.unproject(tp);
-			debug2.setPosition(tp.x, tp.y);
+		//	debug2.setPosition(tp.x, tp.y);
 			//	sketch.add(debug2);
 
 			addToDrawing(lastPos, new Vector2(screenX, screenY));
@@ -353,7 +368,44 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 
 	@Override
 	public boolean longPress(float x, float y) {
-
+		if (strokes.size() > 0) {
+			Vector<PointR> allPoints = new Vector<PointR>();
+			Enumeration<Vector<PointR>> en = strokes.elements();
+			while (en.hasMoreElements()) {
+				Vector<PointR> pts = en.nextElement();
+				allPoints.addAll(pts);
+			}
+			NBestList result = _rec.Recognize(allPoints, strokes.size());
+			String resultTxt;
+			if (result.getScore() == -1) {
+				
+				resultTxt = MessageFormat.format(
+						"No Match!\n[{0} out of {1} comparisons made]",
+						result.getActualComparisons(),
+						result.getTotalComparisons());
+				/*
+				recLabel.setText("No Match!");*/
+			} else {
+				resultTxt = MessageFormat
+						.format("{0}: {1} ({2}px, {3}{4})  [{5,number,integer} out of {6,number,integer} comparisons made]",
+								result.getName(),
+								Utils.round(result.getScore(), 2),
+								Utils.round(result.getDistance(), 2),
+								Utils.round(result.getAngle(), 2),
+								(char) 176, result.getActualComparisons(),
+								result.getTotalComparisons());
+			/*	recLabel.setText("Result: " + result.getName() + " ("
+						+ Utils.round(result.getScore(), 2) + ")");*/
+			}
+			System.out.println(resultTxt);
+			resultLabel.setText(resultTxt);
+			points.clear();
+		}
+		//Wipe current set for next gesture
+		points.clear();
+		sketch.clear();
+		drawingData.clear();
+		strokes.clear();
 		return false;
 	}
 

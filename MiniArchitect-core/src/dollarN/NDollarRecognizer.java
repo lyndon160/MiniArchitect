@@ -76,12 +76,9 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.xmlpull.mxp1.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
-
-import com.badlogic.gdx.Gdx;
 
 public class NDollarRecognizer {
 	private final static String NAMESPACE = null;
@@ -115,10 +112,10 @@ public class NDollarRecognizer {
 	// batch testing
 	private static final int NumRandomTests = 100;
 
-	private Hashtable<String, Multistroke> _gestures;
+	public Hashtable<String, Multistroke> _gestures;
 
 	// added for debugging, Lisa 8/9/2009
-	public static final boolean _debug = false;
+	public static final boolean _debug = true;
 
 	public NDollarRecognizer() {
 		_gestures = new Hashtable<String, Multistroke>(256);
@@ -450,11 +447,19 @@ public class NDollarRecognizer {
 	static int cnt =0;
 	public boolean LoadGesture(InputStream fis) {
 		boolean success = true;
-		MXParser reader = null;
+	//	MXParser reader = null;
 		//FileInputStream fis = null;
+		
+		XmlPullParserFactory factory;
+		
 		try {
-			reader = new MXParser();
+			//reader = new MXParser();
+			
+			factory = XmlPullParserFactory.newInstance();
+		    factory.setNamespaceAware(true);
+		    XmlPullParser reader = factory.newPullParser();
 		//	fis = file;
+			//reader.setInput(fis, "UTF-8");
 			reader.setInput(fis, "UTF-8");
 
 			Multistroke p = ReadGesture(reader); // Lisa 1/2/2008
@@ -567,8 +572,8 @@ public class NDollarRecognizer {
 			XmlPullParser reader = null;
 			try {
 				fis = new FileInputStream(files[i]);
-				reader = new MXParser();
-				reader.setInput(fis, "UTF-8");
+		//		reader = new MXParser();
+//				reader.setInput(fis, "UTF-8");
 
 				Multistroke p = ReadGesture(reader); // Lisa 1/2/2008
 				// only include the kinds of gestures we say to (via threshold),
@@ -935,7 +940,7 @@ public class NDollarRecognizer {
 		}
 		return -1;
 	}
-
+	//FIXME
 	public boolean CreateRotationGraph(String file1, String file2, String dir,
 			boolean similar) {
 		boolean success = true;
@@ -945,15 +950,15 @@ public class NDollarRecognizer {
 		try {
 			// read gesture file #1
 			fis = new FileInputStream(new File(file1));
-			reader = new MXParser();
-			reader.setInput(fis, "UTF-8");
+		//	reader = new MXParser();
+		//	reader.setInput(fis, "UTF-8");
 			Multistroke g1 = ReadGesture(reader); // Lisa 1/2/2008
 			fis.close();
 
 			// read gesture file #2
 			fis = new FileInputStream(new File(file2));
-			reader = new MXParser();
-			reader.setInput(fis, "UTF-8");
+			//reader = new MXParser();
+		//	reader.setInput(fis, "UTF-8");
 			Multistroke g2 = ReadGesture(reader); // Lisa 1/2/2008
 			fis.close();
 			fis = null;

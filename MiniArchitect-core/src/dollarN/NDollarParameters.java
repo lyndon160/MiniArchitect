@@ -100,5 +100,9 @@ public class NDollarParameters
 		}
 		return instance;
 	}
+	public static void wipeInstance(){
+		instance=null;
+	}
+	
 
 }
