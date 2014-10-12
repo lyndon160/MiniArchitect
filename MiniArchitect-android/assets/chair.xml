@@ -1,4 +1,4 @@
-<Gesture Name="Chair" Subject="test" Speed="test" NumPts="115" Milliseconds="0" AppName="NDollarRecognizer-java" AppVer="1.0" Date="09/30/2011" TimeOfDay="10:38:29">
+<Gesture Name="chair" Subject="test" Speed="test" NumPts="115" Milliseconds="0" AppName="NDollarRecognizer-java" AppVer="1.0" Date="09/30/2011" TimeOfDay="10:38:29">
 <Stroke index="1">
 <Point X="126.0" Y="120.0" T="0" />
 <Point X="126.0" Y="122.0" T="0" />

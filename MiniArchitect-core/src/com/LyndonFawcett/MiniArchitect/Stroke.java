@@ -1,12 +1,9 @@
 package com.LyndonFawcett.MiniArchitect;
 
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Vector;
 
 import com.badlogic.gdx.ApplicationListener;
@@ -14,7 +11,6 @@ import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -35,13 +31,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-import dollarN.Multistroke;
 import dollarN.NBestList;
-import dollarN.NDollarParameters;
 import dollarN.NDollarRecognizer;
 import dollarN.PointR;
 import dollarN.Utils;
@@ -51,43 +43,62 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 	private static final float BRUSHSIZE = 10;
 	SpriteBatch batch;
 	ArrayList<Sprite> sketch;
-	ArrayList<Sprite> furnishings;
+	
+	public static ArrayList<Item> furnishings;
+	
+	public static InputMultiplexer multiplexer;
+	
 	ArrayList<Vector2> drawingData;
 	Vector<PointR> points = new Vector<PointR>();
 	Vector<Vector<PointR>> strokes = new Vector<Vector<PointR>>();
 	Sprite pixel;
 	Pixmap colour, colourDebug;
 	Texture background;
-	private OrthographicCamera cam;
+	public static OrthographicCamera cam;
 	public float zoom = 1.0f;
 	int SPRITECOUNT=400;
 	int pointer=0;
 	private Stage stage;
 	Button paintBtn,grabBtn;
+	Texture table,chair,light,tv,sofa;
 	Skin skin;
 	Label fpsLabel;
 	Label resultLabel;
 	NDollarRecognizer _rec = null;
 	Boolean grab=false,paint=false;
-	private Viewport viewport;
 	Texture tableTexture;
 	
 	@Override
 	public void create() {
 		_rec = new NDollarRecognizer();
+		//Load images
+		table = new Texture(Gdx.files.internal("table.png"));
+		chair = new Texture(Gdx.files.getFileHandle("chair.png", FileType.Internal), false);
+		light = new Texture(Gdx.files.getFileHandle("light.png", FileType.Internal), false);
+		tv = new Texture(Gdx.files.getFileHandle("TV.png", FileType.Internal), false);
+		sofa = new Texture(Gdx.files.getFileHandle("sofa.png", FileType.Internal), false);
 		
-		
-
+		//Load gestures
 		_rec.LoadGesture(Gdx.files.getFileHandle("wall.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("light.xml", FileType.Internal).read());
 		_rec.LoadGesture(Gdx.files.getFileHandle("table.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("table2.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("table3.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("table4.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("tv.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("chair2.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("wall.xml", FileType.Internal).read());
+		_rec.LoadGesture(Gdx.files.getFileHandle("wall2.xml", FileType.Internal).read());
 		_rec.LoadGesture(Gdx.files.getFileHandle("chair.xml", FileType.Internal).read());
 		_rec.LoadGesture(Gdx.files.getFileHandle("circle.xml", FileType.Internal).read());
+		
+		
 		batch = new SpriteBatch();
 		background = new Texture(Gdx.files.getFileHandle("blueprint.jpg", FileType.Internal), false);
 
-		tableTexture = new Texture(Gdx.files.internal("Table.png"));
+		//tableTexture = new Texture(Gdx.files.internal("Table.png"));
 		
-		
+		//setup ui
 		cam = new OrthographicCamera(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		//viewport = new FitViewport(1920, 1080, cam);
 		batch.setProjectionMatrix(cam.combined);
@@ -152,7 +163,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		stage.addActor(paintBtn);
 		stage.addActor(fpsLabel);
 		stage.addActor(resultLabel);
-		InputMultiplexer multiplexer = new InputMultiplexer();
+		multiplexer = new InputMultiplexer();
 		multiplexer.addProcessor(this);
 		multiplexer.addProcessor(new GestureDetector(this));
 		multiplexer.addProcessor(stage);
@@ -162,6 +173,7 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 
 		sketch= new ArrayList<Sprite>();
 		drawingData= new ArrayList<Vector2>();
+		furnishings= new ArrayList<Item>();
 
 		colour =new Pixmap(1,1,Format.RGBA8888);
 		colourDebug =new Pixmap(1,1,Format.RGBA8888);
@@ -171,18 +183,6 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 		colour.setColor(Color.CYAN);
 		colour.fill();
 		
-	//	pixmap = new Pixmap(64,64, Pixmap.Format.RGBA8888);
-		//Draw a circle about the middle
-    //    pixmap.setColor(Color.CYAN);
-     //  pixmap.drawCircle(pixmap.getWidth()/2, pixmap.getHeight()/2, pixmap.getHeight()/2 - 1);
-      //  pixmap.fillCircle(pixmap.getWidth()/2, pixmap.getHeight()/2, pixmap.getHeight()/2 - 1);
-     //   texture = new Texture(pixmap);
-
-        
-
-		/*	for(int i=0; i<SPRITECOUNT;i++)
-			sketch.add(new Sprite(new Texture(colour), 10,10));
-		 */
 		pixel=new Sprite(new Texture(colour), 4,4);
 		cam.update();
 	}
@@ -198,13 +198,16 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		Gdx.gl.glClearColor(1, 1, 1, 1);
-//		/Gdx.gl.glViewport(Gdx.graphics.getHeight()/2,  Gdx.graphics.getWidth()/2, 800,400);
 		fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond() + " || RAM: "+Gdx.app.getNativeHeap()/131072 +"MB");
 		batch.setProjectionMatrix(cam.combined);
 		batch.begin();
 		batch.draw(background, -Gdx.graphics.getWidth()/2,-Gdx.graphics.getHeight()/2,Gdx.graphics.getWidth(),Gdx.graphics.getHeight() );
 		for(Sprite pixel:sketch){
 			pixel.draw(batch);
+		}
+		
+		for(Item item:furnishings){
+			item.drawAll(batch);
 		}
 		batch.end();
 
@@ -279,6 +282,9 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 	int slow = 0;
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int p) {
+		for(Item item:furnishings){
+			if(item.touched) return false;
+		}
 		if(paint && System.nanoTime()-wait > 900000000L){
 			slow=0;
 			int diffX=screenX-(int)lastPos.x;
@@ -470,10 +476,39 @@ public class Stroke implements ApplicationListener, InputProcessor, GestureListe
 			}
 			System.out.println(resultTxt);
 			
-			//Replace this shameful block of code
-			if(result.getName()=="Table"){
-				//tableTexture
+			//fetch name that can be used to match image/ obj
+			if(result.getName().replaceAll("[0-9]","").contains("chair")){
+				Item i =new Item(chair);				
+				i.setBounds(10,10,200,200);
+			
+				furnishings.add(i);
 			}
+			if(result.getName().replaceAll("[0-9]","").contains("light")){
+				Item i =new Item(light);
+				i.setBounds(10,10,100,100);
+				furnishings.add(i);
+			}
+			
+			if(result.getName().replaceAll("[0-9]","").contains("sofa")){
+				Item i =new Item(sofa);
+				i.setBounds(10,10,300,200);
+				furnishings.add(i);
+			}
+			
+			if(result.getName().replaceAll("[0-9]","").contains("table")){
+				Item i =new Item(table);
+				i.setBounds(10,10,300,200);
+				furnishings.add(i);
+			}
+			if(result.getName().replaceAll("[0-9]","").contains("tv")){
+				Item i =new Item(tv);
+				i.setBounds(10,10,200,200);
+				furnishings.add(i);
+			}
+			
+			
+			
+			
 			resultLabel.setText(resultTxt);
 			points.clear();
 		}
