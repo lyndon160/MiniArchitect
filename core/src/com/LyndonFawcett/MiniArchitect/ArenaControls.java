@@ -60,21 +60,23 @@ public class ArenaControls implements GestureListener{
 	float oldZoom=0;
 	@Override
 	public boolean zoom(float initialDistance, float distance) {
-			Gdx.app.log(initialDistance+"", distance+"");
+		//	Gdx.app.log(initialDistance+"", distance+"");
 			//Calculate pinch to zoom
 			float ratio = initialDistance / distance;
 			float zoom = MathUtils.clamp(initialScale * ratio, 0.1f, 1.0f);
 			float dist;
 			if(initialDistance>distance)
 				dist=0.1f;
+			else if(initialDistance == distance)
+				dist=0f;
 			else
 				dist=-0.1f;
 			//Clamp range and set zoom
-
+			
 				oCam.translate(0, dist, 0);
-				oCam.update();
+
 				pCam.translate(0, dist, 0);
-				pCam.update();
+	
 		
 			if(oCam.position.y > 16){
 				oCam.translate(0, -0.1f, 0);
@@ -83,12 +85,14 @@ public class ArenaControls implements GestureListener{
 				pCam.update();
 			}
 			if(oCam.position.y < 3){
-				oCam.translate(0, 1.0f, 0);
+				oCam.translate(0, 0.1f, 0);
 				oCam.update();
-				pCam.translate(0,  1.0f, 0);
+				pCam.translate(0,  0.1f, 0);
 				pCam.update();
 			}
-			Gdx.app.log(initialDistance+"", distance+"");
+			oCam.update();
+			pCam.update();
+			//Gdx.app.log(initialDistance+"", distance+"");
 			oldZoom=zoom;
 
 		return false;
@@ -96,8 +100,7 @@ public class ArenaControls implements GestureListener{
 
 	@Override
 	public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
-			Vector2 pointer1, Vector2 pointer2) {
-		// TODO Auto-generated method stub
+		 Vector2 pointer1, Vector2 pointer2) {
 		return false;
 	}
 

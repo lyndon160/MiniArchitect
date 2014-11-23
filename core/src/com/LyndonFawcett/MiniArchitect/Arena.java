@@ -1,10 +1,9 @@
 package com.LyndonFawcett.MiniArchitect;
 
-import java.util.ArrayList;
-
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
@@ -21,10 +20,7 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane.ScrollPaneStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.utils.Array;
 
 /**
@@ -46,6 +42,7 @@ public class Arena extends Stroke implements ApplicationListener{
 	public AssetManager assets;
 	static public Array<ArenaItem> instances = new Array<ArenaItem>();
 	public boolean loading;
+	CameraInputController camControl;
 	@Override
 	public void create() { 
 		//Initialise super class (Too complex for super call)
@@ -64,17 +61,20 @@ public class Arena extends Stroke implements ApplicationListener{
 		pCam.far = 100f;
 		pCam.update();
 
-
-
-
 		assets = new AssetManager();
-		if (Gdx.app.getType() == ApplicationType.Android){}
+		if (Gdx.app.getType() == ApplicationType.Android){
+			FileHandle[] files = Gdx.files.internal("furniture").list();
+			for(FileHandle file: files) {
+				assets.load("furniture/"+file.name(), Model.class);
+			}
+		}
 		else{
 			FileHandle[] files = Gdx.files.internal("../android/assets/furniture").list();
 			for(FileHandle file: files) {
 				assets.load("furniture/"+file.name(), Model.class);
 			}
 		}
+		
 
 
 		//Viewport set to fix perspective to orthographic
@@ -110,7 +110,14 @@ public class Arena extends Stroke implements ApplicationListener{
 	
 	@Override
 	public void addItem(String item){
-		instances.add(new ArenaItem(assets.get("furniture/"+item, Model.class), multiplexer));
+		if(item.equals("wall")){
+			//start listening for wall placement
+			multiplexer.addProcessor(new WallListener(multiplexer));
+			
+			
+		}
+		else
+			instances.add(new ArenaItem(assets.get("furniture/"+item, Model.class), multiplexer));
 	}
 
 

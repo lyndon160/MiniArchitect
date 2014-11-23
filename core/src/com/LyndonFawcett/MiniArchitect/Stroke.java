@@ -3,9 +3,7 @@ package com.LyndonFawcett.MiniArchitect;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Vector;
 
 import com.badlogic.gdx.Application.ApplicationType;
@@ -23,31 +21,22 @@ import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Event;
-import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton.ImageButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane.ScrollPaneStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import dollarN.NBestList;
@@ -139,6 +128,8 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		//	Gdx.input.setInputProcessor(this);
 		//	Gdx.input.setInputProcessor(new GestureDetector(this));
 		skin = new Skin(Gdx.files.internal("uiskin.json"));
+		TextureAtlas atlas = new TextureAtlas(Gdx.files.internal("ui-blue.atlas"));
+		skin.addRegions(atlas);
 		Pixmap pixmap = new Pixmap(1, 1, Format.RGBA8888);
 		pixmap.setColor(Color.WHITE);
 		pixmap.fill();
@@ -146,7 +137,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 
 		fpsLabel = new Label("fps:", skin);
 		stage = new Stage(new ScreenViewport());
-		fpsLabel.setFontScale(2);
+		//fpsLabel.setFontScale(2);
 		fpsLabel.setPosition(0, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
 		
 		
@@ -156,14 +147,21 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		
 		
 		resultLabel = new Label("Result:", skin);
-		resultLabel.setFontScale(2);
+		//resultLabel.setFontScale(2);
 		resultLabel.setPosition(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
 		
 
 
 		//window.setFillParent(true);
 		ArrayList<String> furn = new ArrayList<String>();
-		if (Gdx.app.getType() == ApplicationType.Android){}
+		if (Gdx.app.getType() == ApplicationType.Android){
+			
+			FileHandle[] files = Gdx.files.internal("furniture").list();
+			for(FileHandle file: files) {
+				   System.out.println(file.name());
+				   furn.add(file.name());
+				}
+		}
 		else{
 		FileHandle[] files = Gdx.files.internal("../android/assets/furniture").list();
 		for(FileHandle file: files) {
@@ -171,47 +169,80 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		}
 		}
 		
+		final ScrollPane scroll = new ScrollPane(null, skin);
 		ArrayList<Label> list = new ArrayList<Label>();
 		for(final String s:furn){
 			Label listItem = new Label("\n"+s.replaceAll(".g3db", "")+"\n\n", skin);
+		//	listItem.setFontScale(2);
+			listItem.debug();
 			listItem.setAlignment(Align.center);
 //			/listItem.debug();
 			listItem.addListener(new InputListener(){
 				  public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) 
 				    {	
-					  	Gdx.app.log("Model added", s);
-				        addItem(s);
+
 				        return true;
 				    }
+				    public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+					  	if(!scroll.isFlinging()&&!scroll.isDragging()&&!scroll.isPanning()){
+					  		Gdx.app.log("Model added", s);
+					  		addItem(s);
+					  	}
+		        }
 			}
 			
 					
 					);
 			list.add(listItem);
 		}
+		
+		Label listItem = new Label("\n"+"Wall"+"\n\n", skin);
+	//	listItem.setFontScale(2);
+		listItem.debug();
+		listItem.setAlignment(Align.center);
+		//Wall listener
+		listItem.addListener(new InputListener(){
+				boolean creating = false;
+			  public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) 
+			    {	
 
+			        return true;
+			    }
+			    public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+				  	if(!scroll.isFlinging()&&!scroll.isDragging()&&!scroll.isPanning()){
+				  		Gdx.app.log("Starting", "wall");
+				  		addItem("wall");
+				  		creating = true;
+				  		//draw wall here
+				  	}
+	        }
+		});
+		
+		list.add(listItem);
+		
+		
 		
 		
 		Window window = new Window("Models",skin);
 		window.setPosition(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		window.setHeight(Gdx.graphics.getHeight());
-		window.setWidth(Gdx.graphics.getWidth()/10);
+		window.setWidth(Gdx.graphics.getWidth()/5);
 		window.setResizable(false);
 		window.setMovable(false);
 		Table content = new Table(skin);
-		content.setWidth(Gdx.graphics.getWidth()/10);
+		content.setWidth(Gdx.graphics.getWidth()/5);
 		content.pad(10);
 		for(Label l:list){
-		content.add(l).minWidth(Gdx.graphics.getWidth()/11).minHeight(Gdx.graphics.getWidth()/11).fill().align(Align.center);
-		content.row();
+			content.add(l).minWidth(Gdx.graphics.getWidth()/6).minHeight(Gdx.graphics.getWidth()/6).fill().align(Align.center);
+			content.row();
 		}
 		content.row();
 		content.setHeight(Gdx.graphics.getHeight());
 		//content.debug();
 		//'content' is filled with some Actors
+
 		
-		ScrollPane scroll = new ScrollPane(content, skin);
-		scroll.setScrollBarPositions(false, false);
+		scroll.setWidget(content); 
 		//scroll.getV
 		scroll.setScrollingDisabled(true, false);
 		scroll.setHeight(Gdx.graphics.getHeight());
@@ -276,6 +307,10 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		//window.add(grabBtn);
 		//window.row();
 //		window.add(fpsLabel);
+		
+		
+		
+		
 		stage.addActor(camBtn);
 		stage.addActor(grabBtn);
 		stage.addActor(paintBtn);
@@ -325,7 +360,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	    Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 	    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 	        
-		fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond() + " || RAM: "+Gdx.app.getNativeHeap()/131072 +"MB");
+		fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond() + " || RAM USED: "+Gdx.app.getJavaHeap()/131072 +"MB");
 		batch.setProjectionMatrix(cam.combined);
 		batch.begin();
 		batch.draw(background, -Gdx.graphics.getWidth()/2,-Gdx.graphics.getHeight()/2,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
@@ -421,15 +456,6 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 
 	@Override
 	public boolean scrolled(int amount) {
-	/*	if(grab){
-			cam.zoom +=(float)amount/10;
-			Gdx.app.log("scroll",cam.zoom+"");
-			if(cam.zoom>1)
-				cam.zoom=1;
-			if(cam.zoom<=0.1)
-				cam.zoom= 0.1F;
-		}
-		*/
 		return false;
 	}
 	public float initialScale = 1.0f;
