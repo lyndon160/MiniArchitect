@@ -31,7 +31,8 @@ import com.badlogic.gdx.utils.Array;
  *
  */
 public class Arena extends Stroke implements ApplicationListener{
-	public CameraInputController camController, camController2;
+	public static CameraInputController camController;
+	public CameraInputController camController2;
 	public ArenaControls control;
 	static public PerspectiveCamera pCam;
 	static public OrthographicCamera oCam;
@@ -98,6 +99,11 @@ public class Arena extends Stroke implements ApplicationListener{
 		// camController2 = new CameraInputController(pCam);
 
 		multiplexer.addProcessor(new GestureDetector(control));
+		
+		
+		camController = new CameraInputController(pCam);
+	    //multiplexer.addProcessor(camController);
+	    
 		// multiplexer.addProcessor(camController2);
 		// multiplexer.addProcessor(camController);
 		loading = true;

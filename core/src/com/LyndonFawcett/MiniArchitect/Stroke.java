@@ -48,7 +48,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 
 	private static final float BRUSHSIZE = 10;
 	SpriteBatch batch;
-	ArrayList<Sprite> sketch;
+	static ArrayList<Sprite> sketch;
 	
 
 	
@@ -56,7 +56,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	
 	public static InputMultiplexer multiplexer;
 	
-	ArrayList<Vector2> drawingData;
+	public static ArrayList<Vector2> drawingData;
 	Vector<PointR> points = new Vector<PointR>();
 	Vector<Vector<PointR>> strokes = new Vector<Vector<PointR>>();
 	Sprite pixel;
@@ -74,13 +74,18 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	Label resultLabel;
 	NDollarRecognizer _rec = null;
 	static Boolean grab=false;
-	Boolean paint=false;
+	public static Boolean paint=false;
 	Texture tableTexture;
 	long loadstart;
 	public Button camBtn;
 	boolean pCamOn = true;
 	Table menu;
 	Texture texture1;
+	int	camPointer;
+	
+	public static void wipeDrawings(){
+		sketch.clear();
+	}
 	
 	public void createStroke() {    
 		Gdx.app.postRunnable(new Runnable() {
@@ -141,9 +146,6 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		fpsLabel.setPosition(0, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
 		
 		
-		
-	
-
 		
 		
 		resultLabel = new Label("Result:", skin);
@@ -233,7 +235,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		content.setWidth(Gdx.graphics.getWidth()/5);
 		content.pad(10);
 		for(Label l:list){
-			content.add(l).minWidth(Gdx.graphics.getWidth()/6).minHeight(Gdx.graphics.getWidth()/6).fill().align(Align.center);
+			content.add(l).minWidth(Gdx.graphics.getWidth()/6).minHeight(Gdx.graphics.getWidth()/6).fill();
 			content.row();
 		}
 		content.row();
@@ -295,10 +297,15 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		grabBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				if(grab)
+				if(grab){
 					grab =false;
-				else
+					multiplexer.removeProcessor(camPointer);
+				}
+				else{
+					camPointer=multiplexer.size();
+					multiplexer.addProcessor(camPointer, Arena.camController);
 					grab=true;
+				}
 				paint=false;
 			}
 		});

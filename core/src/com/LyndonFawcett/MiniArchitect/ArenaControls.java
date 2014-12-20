@@ -45,8 +45,8 @@ public class ArenaControls implements GestureListener{
 	@Override
 	public boolean pan(float x, float y, float deltaX, float deltaY) {
 		if(Stroke.grab){
-			pCam.translate(-deltaX/160, 0, -deltaY/160);
-			oCam.translate(-deltaX/160, 0, -deltaY/160);
+			//pCam.translate(-deltaX/160, 0, -deltaY/160);
+			//oCam.translate(-deltaX/160, 0, -deltaY/160);
 		}
 		return false;
 	}
@@ -62,7 +62,7 @@ public class ArenaControls implements GestureListener{
 	public boolean zoom(float initialDistance, float distance) {
 		//	Gdx.app.log(initialDistance+"", distance+"");
 			//Calculate pinch to zoom
-			float ratio = initialDistance / distance;
+		/*	float ratio = initialDistance / distance;
 			float zoom = MathUtils.clamp(initialScale * ratio, 0.1f, 1.0f);
 			float dist;
 			if(initialDistance>distance)
@@ -94,7 +94,7 @@ public class ArenaControls implements GestureListener{
 			pCam.update();
 			//Gdx.app.log(initialDistance+"", distance+"");
 			oldZoom=zoom;
-
+*/
 		return false;
 	}
 

@@ -23,6 +23,7 @@ import com.badlogic.gdx.math.collision.Ray;
 
 public class ArenaItem extends ModelInstance implements InputProcessor, GestureListener{
 	boolean selected=false;
+	static boolean move = true;
     public BoundingBox bounds = new BoundingBox();
     public Vector3 center = new Vector3();
     public Vector3 dimensions = new Vector3();
@@ -45,12 +46,12 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 	//Magnet listener - when a wall gets close to another wall it clips
 	//Going to need a start point and end point for placement and dimensions of the wall
 	public ArenaItem(InputMultiplexer multiplexer,double length, double rotation, Vector3 placement) {
-		super(new ModelBuilder().createBox((float)length*5, 1f, 0.4f, 
+		super(new ModelBuilder().createBox((float)length, 1f, 0.4f, 
 	            new Material(ColorAttribute.createDiffuse(Color.DARK_GRAY)),
 	            Usage.Position | Usage.Normal));
 		this.rotation=(float) rotation-90;
-        Arena.pCam.unproject(placement);
-    	placement.y=0;
+       // Arena.pCam.unproject(placement);
+    	placement.y=0.5f;
 		this.transform.setToTranslation(placement);
 
 		this.transform.rotate(0, 1, 0, (float) rotation-90);
@@ -58,11 +59,14 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		multiplexer.addProcessor(this);
 		multiplexer.addProcessor(new GestureDetector(this));
 		
+        bounds.set(new Vector3(1f,1f,1f), new Vector3(0,0,0));
+		
 		center = bounds.getCenter();
         dimensions = bounds.getDimensions();
+
 		wall = true;
 		//this.transform.idt();
-		calculateBoundingBox(bounds);
+		//calculateBoundingBox(bounds);
 	}
 
 	
@@ -90,16 +94,20 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 	final Plane xzPlane = new Plane(new Vector3(0, 1, 0), 0);
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		
-		Gdx.app.log(this.toString(), bounds.getDimensions()+"");
+
+		//Gdx.app.log(this.toString(), bounds.getDimensions()+"");
 
 		//if it intersects with me move me!
 		Ray pickRay = Arena.pCam.getPickRay(screenX, screenY);
 		
 		//bounds.mul(this.transform);
-		calculateBoundingBox(bounds);
-			if(Intersector.intersectRayBounds(pickRay, bounds.set(bounds.min.mul(this.transform), bounds.max.mul(this.transform)), boxIntersection)){
-				Gdx.app.log(this.toString(), "Touched!");
+		//calculateBoundingBox(bounds);
+		//	if(Intersector.intersectRayBounds(pickRay, bounds.set(bounds.min.mul(this.transform), bounds.max.mul(this.transform)), boxIntersection)){
+			
+		
+		if(Intersector.intersectRayBoundsFast(pickRay,transform.getTranslation(new Vector3()),dimensions)){
+			
+		Gdx.app.log(this.toString(), "Touched!");
 				
 
 				for (ArenaItem i:Arena.instances) {
@@ -116,20 +124,31 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-		calculateBoundingBox(bounds);
+		//calculateBoundingBox(bounds);
+		//if(this.selected)
+		//bounds.mul(this.transform);
+		
+		Gdx.app.log(this.toString(), bounds.getDimensions()+"");
 		selected = false;
 		return false;
+	}
+	public static void stopTouch(){
+		move = false;
+	}
+	public static void resumeTouch(){
+		move = true;
 	}
 
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		Ray pickRay = Arena.pCam.getPickRay(screenX, screenY);
-		if(this.selected){
-			calculateBoundingBox(bounds);
+		if(this.selected&&move){
+		//	calculateBoundingBox(bounds);
 			Intersector.intersectRayPlane(pickRay, xzPlane, planeIntersection);
 			//multiply not set to
 			
 			this.transform.setToTranslation(planeIntersection.x,0 ,planeIntersection.z);
+			
 			if(this.wall){
 				this.transform.rotate(0, 1, 0,rotation);
 			}
