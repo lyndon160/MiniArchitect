@@ -12,6 +12,7 @@ import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -29,7 +30,9 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -44,7 +47,7 @@ import dollarN.NDollarRecognizer;
 import dollarN.PointR;
 import dollarN.Utils;
 
-public abstract class Stroke implements ApplicationListener, InputProcessor, GestureListener{
+public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 	private static final float BRUSHSIZE = 10;
 	SpriteBatch batch;
@@ -67,9 +70,10 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	int SPRITECOUNT=400;
 	int pointer=0;
 	protected Stage stage;
-	Button paintBtn,grabBtn;
+	public Button paintBtn,grabBtn;
+	public static Button deleteBox;
 	Texture table,chair,light,tv,sofa;
-	Skin skin;
+	Skin skin,skinText,skinNoBar;
 	Label fpsLabel;
 	Label resultLabel;
 	NDollarRecognizer _rec = null;
@@ -93,6 +97,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	         public void run() {
 	            Gdx.app.log("Time", System.currentTimeMillis()+"");
 	    		//Load gestures
+	            
 	    		_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall.xml", FileType.Internal).read());
 	    		_rec.LoadGesture(Gdx.files.getFileHandle("gestures/light.xml", FileType.Internal).read());
 	    		_rec.LoadGesture(Gdx.files.getFileHandle("gestures/table.xml", FileType.Internal).read());
@@ -132,7 +137,9 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		batch.setProjectionMatrix(cam.combined);
 		//	Gdx.input.setInputProcessor(this);
 		//	Gdx.input.setInputProcessor(new GestureDetector(this));
-		skin = new Skin(Gdx.files.internal("uiskin.json"));
+		skin = new Skin(Gdx.files.internal("ChalkUi/uiskin.json"));
+		skinText = new Skin(Gdx.files.internal("ChalkUi/uiskin.json"));
+		skinNoBar = new Skin(Gdx.files.internal("ChalkUi/uiskin.json"), new TextureAtlas("ChalkUi/uiskin.atlas"));
 		TextureAtlas atlas = new TextureAtlas(Gdx.files.internal("ui-blue.atlas"));
 		skin.addRegions(atlas);
 		Pixmap pixmap = new Pixmap(1, 1, Format.RGBA8888);
@@ -140,7 +147,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		pixmap.fill();
 		skin.add("white", new Texture(pixmap));
 
-		fpsLabel = new Label("fps:", skin);
+		fpsLabel = new Label("fps:", skinText, "24");
 		stage = new Stage(new ScreenViewport());
 		//fpsLabel.setFontScale(2);
 		fpsLabel.setPosition(0, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
@@ -148,7 +155,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		
 		
 		
-		resultLabel = new Label("Result:", skin);
+		resultLabel = new Label("Result:", skinText, "24");
 		//resultLabel.setFontScale(2);
 		resultLabel.setPosition(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
 		
@@ -158,23 +165,24 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		ArrayList<String> furn = new ArrayList<String>();
 		if (Gdx.app.getType() == ApplicationType.Android){
 			
-			FileHandle[] files = Gdx.files.internal("furniture").list();
+			FileHandle[] files = Gdx.files.local("downloaded").list();
 			for(FileHandle file: files) {
 				   System.out.println(file.name());
 				   furn.add(file.name());
 				}
 		}
-		else{
-		FileHandle[] files = Gdx.files.internal("../android/assets/furniture").list();
+		else{//Gdx.files.internal("../android/assets/furniture").list();
+		FileHandle[] files = Gdx.files.local("downloaded").list();
 		for(FileHandle file: files) {
+			System.out.println(file.name());
 		   furn.add(file.name());
 		}
 		}
 		
-		final ScrollPane scroll = new ScrollPane(null, skin);
+		final ScrollPane scroll = new ScrollPane(null, skinNoBar,"nobars");
 		ArrayList<Label> list = new ArrayList<Label>();
 		for(final String s:furn){
-			Label listItem = new Label("\n"+s.replaceAll(".g3db", "")+"\n\n", skin);
+			Label listItem = new Label(("\n"+s.replaceAll(".g3db", "")+"\n\n").replaceAll(" ", "\n"), skinText,"24");
 		//	listItem.setFontScale(2);
 			listItem.debug();
 			listItem.setAlignment(Align.center);
@@ -198,7 +206,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 			list.add(listItem);
 		}
 		
-		Label listItem = new Label("\n"+"Wall"+"\n\n", skin);
+		Label listItem = new Label("\n"+"Wall"+"\n\n", skinText, "24");
 	//	listItem.setFontScale(2);
 		listItem.debug();
 		listItem.setAlignment(Align.center);
@@ -251,12 +259,19 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		scroll.setWidth(Gdx.graphics.getWidth()/10);
 		window.add(scroll);
 
-		stage.addActor(window);
+
 		
+		deleteBox= new Button(skin);
+		deleteBox.add(new Label("Delete",skinText, "default"));
+		deleteBox.setColor(1, 0, 0, 1);
+		deleteBox.setTouchable(Touchable.disabled);
+		deleteBox.setHeight(60*Gdx.graphics.getDensity()); //** Button Height **//
+		deleteBox.setWidth(Gdx.graphics.getWidth()); //** Button Width **//
+		deleteBox.setPosition(0,Gdx.graphics.getHeight()-deleteBox.getHeight()); //** Button location **//
 		
 		
 		paintBtn=new Button(skin);
-		paintBtn.add("Paint");
+		paintBtn.add(new Label("Paint",skinText, "24"));
 		paintBtn.setColor(1, 0, 0, 1);
 		paintBtn.setPosition(100*Gdx.graphics.getDensity(), 50*Gdx.graphics.getDensity()); //** Button location **//
 		paintBtn.setHeight(40*Gdx.graphics.getDensity()); //** Button Height **//
@@ -273,7 +288,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		});
 
 		camBtn=new Button(skin);
-		camBtn.add("2D/3D");
+		camBtn.add(new Label("2D/3D",skinText, "24"));
 		camBtn.setColor(0, 0, 0, 1);
 		camBtn.setPosition(25*Gdx.graphics.getDensity(), 300*Gdx.graphics.getDensity()); //** Button location **//
 		camBtn.setHeight(40*Gdx.graphics.getDensity()); //** Button Height **//
@@ -289,7 +304,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		});
 
 		grabBtn=new Button(skin);
-		grabBtn.add("Grab");
+		grabBtn.add(new Label("Grab",skinText, "24"));
 		grabBtn.setColor(0, 0, 1, 1);
 		grabBtn.setPosition(25*Gdx.graphics.getDensity(), 150*Gdx.graphics.getDensity()); //** Button location **//
 		grabBtn.setHeight(40*Gdx.graphics.getDensity()); //** Button Height **//
@@ -317,12 +332,13 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 		
 		
 		
-		
+		stage.addActor(deleteBox);
 		stage.addActor(camBtn);
 		stage.addActor(grabBtn);
 		stage.addActor(paintBtn);
 		stage.addActor(fpsLabel);
 		stage.addActor(resultLabel);
+		stage.addActor(window);
 		multiplexer = new InputMultiplexer();
 		multiplexer.addProcessor(this);
 		multiplexer.addProcessor(new GestureDetector(this));
@@ -353,7 +369,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	@Override
 	public void resize(int width, int height) {
 	//	viewport.update(width, height);
-		stage.getViewport().update(width, height);
+	//	stage.getViewport().update(width, height);
 	}
 	
 	
@@ -362,7 +378,7 @@ public abstract class Stroke implements ApplicationListener, InputProcessor, Ges
 	}
 
 	@Override
-	public void render() {
+	public void render(float delta) {
 		
 	    Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 	    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);

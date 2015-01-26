@@ -6,16 +6,20 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Plane;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
@@ -23,6 +27,7 @@ import com.badlogic.gdx.math.collision.Ray;
 
 public class ArenaItem extends ModelInstance implements InputProcessor, GestureListener{
 	boolean selected=false;
+	boolean delete=false;
 	static boolean move = true;
     public BoundingBox bounds = new BoundingBox();
     public Vector3 center = new Vector3();
@@ -31,6 +36,7 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
     boolean wall = false;
     float rotation;
 	
+    //Build normal object
 	public ArenaItem(Model model,InputMultiplexer multiplexer) {
 		super(model);
 		Gdx.app.log("Model", this.toString());
@@ -39,7 +45,11 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		calculateBoundingBox(bounds);
 		center = bounds.getCenter();
         dimensions = bounds.getDimensions();
-        
+		for (ArenaItem i:Arena.instances) {
+			i.draggable=false;
+			i.selected=false;
+		}
+        selected= true;
 	}
 
 	//Constructor building a wall
@@ -67,6 +77,13 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		wall = true;
 		//this.transform.idt();
 		//calculateBoundingBox(bounds);
+		
+		for (ArenaItem i:Arena.instances) {
+			i.draggable=false;
+			i.selected=false;
+		}
+        selected= true;
+
 	}
 
 	
@@ -89,9 +106,11 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 	}
 
 	
+	
 	Vector3 planeIntersection = new Vector3();
 	Vector3 boxIntersection = new Vector3();
 	final Plane xzPlane = new Plane(new Vector3(0, 1, 0), 0);
+	boolean draggable = false;
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 
@@ -107,19 +126,24 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		
 		if(Intersector.intersectRayBoundsFast(pickRay,transform.getTranslation(new Vector3()),dimensions)){
 			
-		Gdx.app.log(this.toString(), "Touched!");
-				
-
-				for (ArenaItem i:Arena.instances) {
-					i.selected=false;
+			Gdx.app.log(this.toString(), "Touched!");
+					
+	
+					for (ArenaItem i:Arena.instances) {
+						i.draggable=false;
+						i.selected=false;
+					}
+					selected = true;
+					draggable = true;
+					//Pixmap colour = new Pixmap(16,16, Pixmap.Format.RGBA8888);
+					//colour.setColor(Color.OLIVE);
+					//this.materials.get(0).set(TextureAttribute.createSpecular(new Texture(colour)));
+					return false;
 				}
-				selected = true;
-				return false;
-			}
+				
+		draggable = false;
 			
-			selected = false;
-		
-		return false;
+			return false;
 	}
 
 	@Override
@@ -128,8 +152,8 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		//if(this.selected)
 		//bounds.mul(this.transform);
 		
-		Gdx.app.log(this.toString(), bounds.getDimensions()+"");
-		selected = false;
+		Gdx.app.log(this.toString(), this.selected+"");
+		//selected = false;
 		return false;
 	}
 	public static void stopTouch(){
@@ -142,17 +166,28 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		Ray pickRay = Arena.pCam.getPickRay(screenX, screenY);
-		if(this.selected&&move){
+		if(this.draggable&&move){
 		//	calculateBoundingBox(bounds);
 			Intersector.intersectRayPlane(pickRay, xzPlane, planeIntersection);
 			//multiply not set to
 			
-			this.transform.setToTranslation(planeIntersection.x,0 ,planeIntersection.z);
 			
-			if(this.wall){
-				this.transform.rotate(0, 1, 0,rotation);
+			//save rotation
+			
+
+			Quaternion rot = this.transform.getRotation(new Quaternion());
+			this.transform.set(planeIntersection.x,0 ,planeIntersection.z,	rot.x,rot.y,rot.z,rot.w);
+			//this.transform.set
+			
+
+			
+			//Check and see if model in deletebox
+			if(screenY < Stroke.deleteBox.getHeight()){
+				System.out.println("Delete me " + screenY);
+				delete=true;
+				Arena.instances.removeValue(this, false);
 			}
-			// need to move box
+			
 		}
 		return false;
 	}
@@ -212,24 +247,53 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 	}
 
 	
-	
+	Vector2 lastA, lastB;
 	//rotate object
-	@Override
-	public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
-			Vector2 pointer1, Vector2 pointer2) {
+	@Override	
+	public boolean pinch(Vector2 oldA, Vector2 oldB,Vector2 newA, Vector2 newB) {
 		if(!Stroke.grab){
-			// If I am selected rotate me!
-			Gdx.app.log("Pinch", this.toString());
-			Vector2 a = initialPointer2.sub(initialPointer1);
-	        Vector2 b = pointer2.sub(pointer1);
-	        a = a.nor();
-	        b = b.nor();
-	        float deltaRot = (float)(Math.atan2(b.y,b.x) - Math.atan2(a.y,a.x));
-	        float deltaRotDeg = (float)((deltaRot*180)/Math.PI);
-	        this.transform.rotate(1, 0, 1, deltaRotDeg*Gdx.graphics.getDeltaTime());
-		}
+			if(lastA != null && this.selected){
+				//TODO add check to see if this arena item is selected
+				
+				Gdx.app.log("Pinch a", lastA.toString() + newA.toString());
+				Gdx.app.log("Pinch b", lastB.toString() + newB.toString());
+				
+				//Need to check if new and old have changed
+				if(lastA.y == newA.y && lastB.y == newB.y){
+					Gdx.app.log("Pinch", "Same so returning");
+					return false;
+				}
+				
+				//check direction by comparing X
+				if(oldA.x > oldB.x){
+					if(lastA.y <= newA.y && lastB.y >= newB.y){
+						Gdx.app.log("Pinch", "Rotate negative");
+						this.transform.rotate(0, 1, 0, -100*Gdx.graphics.getDeltaTime());
+						}
+					else if(lastA.y >= newA.y && lastB.y <= newB.y){
+						Gdx.app.log("Pinch", "Rotate positive");
+						this.transform.rotate(0, 1, 0, 100*Gdx.graphics.getDeltaTime());
+					}
+				}
+				
+				else{
+					if(lastA.y <= newA.y && lastB.y >= newB.y){
+						Gdx.app.log("Pinch", "Rotate negative");
+						this.transform.rotate(0, 1, 0, 100*Gdx.graphics.getDeltaTime());
+					}
+					else if(lastA.y >= newA.y && lastB.y <= newB.y){
+						Gdx.app.log("Pinch", "Rotate positive");
+						this.transform.rotate(0, 1, 0, -100*Gdx.graphics.getDeltaTime());
+					}
+				}
+
+			}
+			
+			lastA = newA.cpy();
+			lastB = newB.cpy();
+		
+		}		
         return false;
 	}
-
-
+	
 }

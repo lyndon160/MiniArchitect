@@ -30,7 +30,7 @@ import com.badlogic.gdx.utils.Array;
  * @author Lyndon
  *
  */
-public class Arena extends Stroke implements ApplicationListener{
+public class Arena extends Stroke{
 	public static CameraInputController camController;
 	public CameraInputController camController2;
 	public ArenaControls control;
@@ -45,7 +45,7 @@ public class Arena extends Stroke implements ApplicationListener{
 	public boolean loading;
 	CameraInputController camControl;
 	@Override
-	public void create() { 
+	public void show() { 
 		//Initialise super class (Too complex for super call)
 		createStroke();
 
@@ -145,6 +145,18 @@ public class Arena extends Stroke implements ApplicationListener{
 		pCam.update();
 
 	}
+	
+
+
+
+
+	@Override
+	public void hide() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 
 
 
