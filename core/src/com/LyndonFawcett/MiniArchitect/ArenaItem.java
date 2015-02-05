@@ -35,10 +35,12 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
     static public ArrayList<ArenaItem> walls;
     boolean wall = false;
     float rotation;
+    public String modelName;
 	
     //Build normal object
-	public ArenaItem(Model model,InputMultiplexer multiplexer) {
+	public ArenaItem(Model model,String name,InputMultiplexer multiplexer) {
 		super(model);
+		modelName=name;
 		Gdx.app.log("Model", this.toString());
 		multiplexer.addProcessor(this);
 		multiplexer.addProcessor(new GestureDetector(this));
@@ -75,6 +77,7 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
         dimensions = bounds.getDimensions();
 
 		wall = true;
+		modelName="wall";
 		//this.transform.idt();
 		//calculateBoundingBox(bounds);
 		
@@ -166,7 +169,7 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		Ray pickRay = Arena.pCam.getPickRay(screenX, screenY);
-		if(this.draggable&&move){
+		if(this.draggable&&move&&!Arena.grab){
 		//	calculateBoundingBox(bounds);
 			Intersector.intersectRayPlane(pickRay, xzPlane, planeIntersection);
 			//multiply not set to
@@ -182,7 +185,7 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 
 			
 			//Check and see if model in deletebox
-			if(screenY < Stroke.deleteBox.getHeight()){
+			if(screenY < Stroke.deleteBox.getHeight()&& screenX < Stroke.deleteBox.getWidth()){
 				System.out.println("Delete me " + screenY);
 				delete=true;
 				Arena.instances.removeValue(this, false);

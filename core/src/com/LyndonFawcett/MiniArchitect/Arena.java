@@ -1,10 +1,9 @@
 package com.LyndonFawcett.MiniArchitect;
 
 import com.badlogic.gdx.Application.ApplicationType;
-import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.assets.loaders.resolvers.LocalFileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -19,9 +18,8 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Json;
 
 /**
  * 3D implementation and view of room
@@ -33,22 +31,25 @@ import com.badlogic.gdx.utils.Array;
 public class Arena extends Stroke{
 	public static CameraInputController camController;
 	public CameraInputController camController2;
-	public ArenaControls control;
 	static public PerspectiveCamera pCam;
 	static public OrthographicCamera oCam;
 	public Model model;
 	public ModelInstance instance;
 	public ModelBatch modelBatch;
 	public Environment environment;
-	public AssetManager assets;
-	static public Array<ArenaItem> instances = new Array<ArenaItem>();
+	public static AssetManager assets;
+	static public Array<ArenaItem> instances; 
 	public boolean loading;
 	CameraInputController camControl;
 	@Override
 	public void show() { 
 		//Initialise super class (Too complex for super call)
 		createStroke();
-
+		if(instances == null)
+			instances = new Array<ArenaItem>();
+		if(assets==null)
+			loadAssets();
+		System.out.println("Loading arena");
 		//lighting
 		environment = new Environment();
 		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
@@ -61,21 +62,6 @@ public class Arena extends Stroke{
 		pCam.near = 1f;
 		pCam.far = 100f;
 		pCam.update();
-
-		assets = new AssetManager();
-		if (Gdx.app.getType() == ApplicationType.Android){
-			FileHandle[] files = Gdx.files.internal("furniture").list();
-			for(FileHandle file: files) {
-				assets.load("furniture/"+file.name(), Model.class);
-			}
-		}
-		else{
-			FileHandle[] files = Gdx.files.internal("../android/assets/furniture").list();
-			for(FileHandle file: files) {
-				assets.load("furniture/"+file.name(), Model.class);
-			}
-		}
-		
 
 
 		//Viewport set to fix perspective to orthographic
@@ -92,26 +78,40 @@ public class Arena extends Stroke{
 				Usage.Position | Usage.Normal);
 		instance = new ModelInstance(model);
 		instance.transform.setToTranslation(0, 0, 0);
-
-		control = new ArenaControls(pCam, oCam);
-
-		// camController = new CameraInputController(oCam);
-		// camController2 = new CameraInputController(pCam);
-
-		multiplexer.addProcessor(new GestureDetector(control));
-		
-		
+	
 		camController = new CameraInputController(pCam);
-	    //multiplexer.addProcessor(camController);
-	    
-		// multiplexer.addProcessor(camController2);
-		// multiplexer.addProcessor(camController);
+
 		loading = true;
+		System.out.println(instances.size);
 	}
 
 
 	private void doneLoading() {
 		loading = false;
+	}
+	static public void loadAssets(){
+
+		assets = new AssetManager(new LocalFileHandleResolver());
+		if (Gdx.app.getType() == ApplicationType.Android){
+			FileHandle[] files = Gdx.files.local("downloaded/models").list();
+			for(FileHandle file: files) {
+				if(file.path().contains(".g3db"))
+					assets.load(file.path(), Model.class);
+			}
+		}
+		else{
+			FileHandle[] files = Gdx.files.local("downloaded/models").list();
+			for(FileHandle file: files) {
+
+				
+				if(file.path().contains(".g3db")){
+					System.out.println("Loading :"+file.path());
+						assets.load(file.path(), Model.class);
+				}
+			}
+		}
+		
+
 	}
 	
 	@Override
@@ -123,7 +123,7 @@ public class Arena extends Stroke{
 			
 		}
 		else
-			instances.add(new ArenaItem(assets.get("furniture/"+item, Model.class), multiplexer));
+			instances.add(new ArenaItem(assets.get("downloaded/models/"+item, Model.class),item, multiplexer));
 	}
 
 
@@ -152,8 +152,8 @@ public class Arena extends Stroke{
 
 	@Override
 	public void hide() {
-		// TODO Auto-generated method stub
-		
+		instances.clear();
+		stage.dispose();
 	}
 
 

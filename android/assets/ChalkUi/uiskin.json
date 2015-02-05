@@ -24,19 +24,19 @@ com.badlogic.gdx.scenes.scene2d.ui.ProgressBar$ProgressBarStyle: {
 },
 com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 	default: {
-		font: font_nixie_one_24pt_bold,
+		font: default-font,
 		fontColor: { a: 1, b: 1, g: 1, r: 1 },
 		disabledFontColor: { a: 1, b: 0.8, g: 0.8, r: 0.8 },
-		up: woodcalk,
+		up: default-round,
 		down: default-round-down
 	},
-	24: {
+	24: { font: font_nixie_one_24pt_bold, up: btn_blue_glossyb },
+	48: { font: font_nixie_one_48pt_bold, up: woodcalk },
+	bad: {
 		font: font_nixie_one_24pt_bold,
-		fontColor: { a: 1, b: 1, g: 1, r: 1 },
-		up: woodcalk,
-		down: default-round
+		fontColor: { a: 1 },
+		up: btn_pink_glossy
 	},
-	48: { font: font_nixie_one_48pt_bold, up: woodcalk, down: default-round-large },
 	toggle: {
 		font: default-font,
 		fontColor: { a: 1, b: 1, g: 1, r: 1 },
@@ -45,15 +45,27 @@ com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 		down: default-round-down,
 		checked: default-round-down
 	},
-	32: {
-		font: font_nixie_one_32pt_bold,
+	black: {
+		font: font_nixie_one_24pt_bold,
 		fontColor: { a: 1, b: 1, g: 1, r: 1 },
-		up: woodcalk,
-		down: default-round-large
-	}
+		downFontColor: { a: 1 },
+		up: btn_black_glossy,
+		down: btn_white_glossy
+	},
+	good: {
+		font: font_nixie_one_24pt_bold,
+		fontColor: { a: 1 },
+		up: btn_army_glossy
+	},
+	list: { font: font_nixie_one_24pt_bold, up: btn_blue_glossy, down: btn_black_glossy },
+	32: { font: font_nixie_one_32pt_bold, up: woodcalk }
 },
 com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
-	default: { imageUp: paint_brush, up: default-round, down: default-round-down }
+	default: { imageUp: paint_brush, up: default-round, down: default-round-down },
+	upvote: { imageUp: whiteup, imageChecked: upvote },
+	back: { imageUp: back, imageDown: back2 },
+	delete: { imageUp: danger },
+	publish: { imageUp: publish, imageDown: pub2 }
 },
 com.badlogic.gdx.scenes.scene2d.ui.SplitPane$SplitPaneStyle: {
 	default-vertical: { handle: default-splitpane-vertical },
@@ -64,11 +76,13 @@ com.badlogic.gdx.scenes.scene2d.ui.Touchpad$TouchpadStyle: {
 },
 com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
 	default: { up: default-round, down: default-round-down },
-	toggle: { up: default-round, down: default-round-down, checked: default-round-down }
+	toggle: { up: default-round, down: default-round-down, checked: default-round-down },
+	chalk: {}
 },
 com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle: {
 	default: {
-		titleFont: font_nixie_one_24pt_bold,
+		background: default-window,
+		titleFont: default-font,
 		titleFontColor: { a: 1, b: 1, g: 1, r: 1 }
 	},
 	dialog: {
@@ -76,11 +90,16 @@ com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle: {
 		titleFont: default-font,
 		titleFontColor: { a: 1, b: 1, g: 1, r: 1 },
 		stageBackground: dialogDim
+	},
+	chalk: {
+		background: woodcalk,
+		titleFont: font_nixie_one_24pt_bold,
+		titleFontColor: { a: 1, b: 1, g: 1, r: 1 }
 	}
 },
 com.badlogic.gdx.scenes.scene2d.ui.TextField$TextFieldStyle: {
 	default: {
-		font: font_nixie_one_24pt_bold,
+		font: default-font,
 		fontColor: { a: 1, b: 1, g: 1, r: 1 },
 		background: textfield,
 		cursor: cursor,
@@ -88,26 +107,35 @@ com.badlogic.gdx.scenes.scene2d.ui.TextField$TextFieldStyle: {
 	}
 },
 com.badlogic.gdx.scenes.scene2d.ui.ScrollPane$ScrollPaneStyle: {
-	nobars: { background: woodcalk },
-	default: { background: default-rect }
+	default: {
+		background: default-rect,
+		hScroll: default-scroll,
+		hScrollKnob: default-round-large,
+		vScroll: default-scroll,
+		vScrollKnob: default-round-large
+	},
+	transparent: {}
 },
 com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
+	optional: {
+		font: default-font,
+		fontColor: { a: 1, b: 0.7, g: 0.7, r: 0.7 }
+	},
 	default: {
 		font: default-font,
 		fontColor: { a: 1, b: 1, g: 1, r: 1 }
 	},
-	24: {
-		font: font_nixie_one_24pt_bold,
-		fontColor: { a: 1, b: 1, g: 1, r: 1 }
+	24: { font: font_nixie_one_24pt_bold },
+	48: { font: font_nixie_one_48pt_bold },
+	error: {
+		font: default-font,
+		fontColor: { a: 1, r: 1 }
 	},
-	48: {
-		font: font_nixie_one_48pt_bold,
-		fontColor: { a: 1, b: 1, g: 1, r: 1 }
+	title: {
+		font: default-font,
+		fontColor: { a: 1, b: 0.8, g: 0.8, r: 0.8 }
 	},
-	32: {
-		font: font_nixie_one_32pt_bold,
-		fontColor: { a: 1, b: 1, g: 1, r: 1 }
-	}
+	32: { font: font_nixie_one_32pt_bold }
 },
 com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle: {
 	default: {

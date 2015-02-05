@@ -14,6 +14,8 @@ import com.LyndonFawcett.MiniArchitect.tween.ActorAccessor;
 import com.LyndonFawcett.MiniArchitect.utils.Updater;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.graphics.GL20;
@@ -28,7 +30,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
-public class CreateOptionsScreen implements Screen{
+public class CreateOptionsScreen implements Screen,InputProcessor{
 
 	private Stage stage;
 	private Skin skin;
@@ -48,7 +50,9 @@ public class CreateOptionsScreen implements Screen{
 		stage.draw();
 
 		tweenManager.update(delta);
-		
+		if(Gdx.input.isKeyPressed(Keys.BACK) || Gdx.input.isKeyPressed(Keys.BACKSPACE)){
+			((Game) Gdx.app.getApplicationListener()).setScreen(new MenuScreen());
+		}
 	}
 
 	@Override
@@ -59,6 +63,7 @@ public class CreateOptionsScreen implements Screen{
 
 	@Override
 	public void show() {
+		Gdx.input.setInputProcessor((InputProcessor)this);
 		background = new Texture(Gdx.files.getFileHandle("blueprint.jpg", FileType.Internal), false);
 
 		stage = new Stage();
@@ -74,11 +79,10 @@ public class CreateOptionsScreen implements Screen{
 
 
 		// creating heading
-		Label heading = new Label("Room creation", skin, "48");
-		heading.setFontScale(2);
+		Label heading = new Label("ROOM CREATION", skin, "48");
 
 		// creating buttons
-		TextButton buttonView = new TextButton("Create from scratch", skin, "32");
+		TextButton buttonView = new TextButton("CREATE FROM SCRATCH", skin, "32");
 		buttonView.addListener(new ClickListener() {
 
 			@Override
@@ -87,6 +91,8 @@ public class CreateOptionsScreen implements Screen{
 
 					@Override
 					public void run() {
+						//Get rid of old settings
+						Arena.instances = null;
 					 ((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 					}
 				})));
@@ -98,7 +104,7 @@ public class CreateOptionsScreen implements Screen{
 		
 		
 		
-		TextButton settings = new TextButton("Predefine your room", skin, "32");
+		TextButton settings = new TextButton("PREDEFINE ROOM", skin, "32");
 		settings.addListener(new ClickListener() {
 
 			@Override
@@ -117,7 +123,7 @@ public class CreateOptionsScreen implements Screen{
 	
 		
 
-		TextButton news = new TextButton("Create a bedroom", skin, "32");
+		TextButton news = new TextButton("CREATE BEDROOM", skin, "32");
 		news.addListener(new ClickListener() {
 
 			@Override
@@ -134,7 +140,7 @@ public class CreateOptionsScreen implements Screen{
 		news.pad(15);
 
 
-		TextButton buttonCreate = new TextButton("Create a kitchen", skin, "32");
+		TextButton buttonCreate = new TextButton("CREATE KITCHEN", skin, "32");
 		buttonCreate.addListener(new ClickListener() {
 
 			@Override
@@ -157,10 +163,10 @@ public class CreateOptionsScreen implements Screen{
 
 		// putting stuff together
 		table.add(heading).spaceBottom(80).row();
-		table.add(buttonView).space(15).width(800).height(300);
-		table.add(settings).space(15).width(800).height(300).row();
-		table.add(buttonCreate).space(15).width(800).height(300);
-		table.add(news).space(15).width(800).height(300);
+		table.add(buttonView).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f);
+		table.add(settings).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f).row();
+		table.add(buttonCreate).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f);
+		table.add(news).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f);
 		
 
 		stage.addActor(table);
@@ -224,6 +230,56 @@ public class CreateOptionsScreen implements Screen{
 	public void dispose() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public boolean keyDown(int keycode) {
+		System.out.println("Key pressed");
+		if(keycode == Keys.BACK || keycode == Keys.BACKSPACE)
+			((Game) Gdx.app.getApplicationListener()).setScreen(new MenuScreen());
+		return false;
+	}
+
+	@Override
+	public boolean keyUp(int keycode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean keyTyped(char character) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean touchDragged(int screenX, int screenY, int pointer) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean mouseMoved(int screenX, int screenY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean scrolled(int amount) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 		
