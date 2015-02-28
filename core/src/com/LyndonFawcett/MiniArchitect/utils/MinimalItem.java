@@ -27,7 +27,7 @@ public class MinimalItem {
 		while(!Arena.assets.update()){
 			//TODO loading bar with assets.getProgress();
 			
-		}//Wait until assets are loaded
+		}//Spinz until assets are loaded
 		System.out.println("Converting "+modelName);
 		ArenaItem i = new ArenaItem(Arena.assets.get("downloaded/models/"+modelName, Model.class),modelName, multiplexer);
 		i.transform.set(this.transform);

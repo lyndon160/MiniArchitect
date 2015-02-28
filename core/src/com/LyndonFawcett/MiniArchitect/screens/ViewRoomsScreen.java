@@ -10,6 +10,7 @@ import org.jsoup.nodes.Element;
 
 import com.LyndonFawcett.MiniArchitect.Arena;
 import com.LyndonFawcett.MiniArchitect.ArenaItem;
+import com.LyndonFawcett.MiniArchitect.Start;
 import com.LyndonFawcett.MiniArchitect.Stroke;
 import com.LyndonFawcett.MiniArchitect.utils.MinimalItem;
 import com.badlogic.gdx.Files.FileType;
@@ -21,6 +22,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
@@ -84,7 +86,7 @@ public class ViewRoomsScreen implements Screen{
 		Table filterWindow = new Table(skin);
 		TextButton myRoomsBtn = new TextButton("MY ROOMS",skin,"24");
 		TextButton topRoomsBtn = new TextButton("TOP ROOMS",skin,"24");
-		TextButton newRoomsBtn = new TextButton("NEW ROOMS",skin,"24");
+		TextButton newRoomsBtn = new TextButton("DISCOVER",skin,"24");
 
 
 
@@ -99,6 +101,86 @@ public class ViewRoomsScreen implements Screen{
 
 		//query for content created my this user
 		myRoomsBtn.addListener(new ClickListener() {
+			@Override
+			public void clicked(InputEvent event, float x, float y) {
+				final Document doc;
+
+				// need http protocol
+				try {
+					doc = Jsoup.connect("http://lyndonfawcett.me/getMyRooms.php?id="+Start.username).get();
+
+					System.out.println("Mine selected");
+
+					// get all links
+					Element jbody = doc.body();
+					Json j = new Json();
+					//j.fromJson(ArrayList.class, jbody.text().replace(",{}", "");
+					if(jbody.text().contentEquals("No room"))
+						return;
+					JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
+
+					Iterator<JsonValue> i = root.child().iterator();
+					rightPaneContent.clear();
+					while(i.hasNext()){
+						JsonValue obj = i.next();
+						final int id = obj.child().asInt();
+
+						String owner = obj.child().next().asString();
+
+						String roomName = obj.child().next().next().asString();
+
+						String roomJson = obj.child().next().next().next().toString();
+						//Generate arena items from minimal items
+
+						ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
+						final Array<ArenaItem> arenaItems = new Array<ArenaItem>();
+						//if(Stroke.multiplexer == null)
+						Stroke.multiplexer = new InputMultiplexer();
+						//if(Arena.instances == null)
+						Arena.instances  = new Array<ArenaItem>();
+						for(MinimalItem mini : minItems)
+							if(!mini.modelName.contains("wall"))
+								arenaItems.add(mini.convertToArenaItem(Stroke.multiplexer));
+
+
+
+						TextButton l = new TextButton(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
+						l.addListener(new ClickListener() {
+							@Override
+							public void clicked(InputEvent event, float x, float y) {
+								Arena.instances=arenaItems;
+								System.out.println(Arena.instances.size);
+								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
+							}
+						});
+						rightPaneContent.add(l).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
+						
+						//Vote button
+						final ImageButton like = new ImageButton(skin,"upvote");
+						like.addListener(new ClickListener() {
+							Document doc;
+							@Override
+							public void clicked(InputEvent event, float x, float y) {
+								//upvote room
+								try {
+									doc = Jsoup.connect("http://lyndonfawcett.me/voteOnRoom.php?id="+ id).get();
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								like.setDisabled(true);
+							}
+						});
+						rightPaneContent.add(like).height(Gdx.graphics.getHeight()/10).width(Gdx.graphics.getWidth()/10).row();
+
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		//get top content and fill layout
+		topRoomsBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
 				final Document doc;
@@ -132,36 +214,57 @@ public class ViewRoomsScreen implements Screen{
 
 						ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
 						final Array<ArenaItem> arenaItems = new Array<ArenaItem>();
+						final InputMultiplexer arenaMulti = new InputMultiplexer();
 						if(Stroke.multiplexer == null)
 							Stroke.multiplexer = new InputMultiplexer();
-						if(Arena.instances == null)
+						if(Arena.instances == null){
 							Arena.instances  = new Array<ArenaItem>();
+							Arena.wireFrames =new ArrayList<ModelInstance>();
+						}
 						for(MinimalItem mini : minItems)
 							if(!mini.modelName.contains("wall"))
-								arenaItems.add(mini.convertToArenaItem(Stroke.multiplexer));
-						//Arena.instances = arenaItems.;
+								arenaItems.add(mini.convertToArenaItem(arenaMulti));
 
 
-						Label l = new Label(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
+
+						TextButton l = new TextButton(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
 						l.addListener(new ClickListener() {
 							@Override
 							public void clicked(InputEvent event, float x, float y) {
 								Arena.instances=arenaItems;
+								Arena.multiplexer=arenaMulti;
 								System.out.println(Arena.instances.size);
 								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 							}
 						});
-						rightPaneContent.add(l);
+						rightPaneContent.add(l).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
+						
+						//Vote button
+						final ImageButton like = new ImageButton(skin,"upvote");
+						like.addListener(new ClickListener() {
+							Document doc;
+							@Override
+							public void clicked(InputEvent event, float x, float y) {
+								//upvote room
+								try {
+									doc = Jsoup.connect("http://lyndonfawcett.me/voteOnRoom.php?id="+ id).get();
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								like.setDisabled(true);
+							}
+						});
+						rightPaneContent.add(like).height(Gdx.graphics.getHeight()/10).width(Gdx.graphics.getWidth()/10).row();
 
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		});
-		//get top content and fill layout
-		topRoomsBtn.addListener(new ClickListener() {
+		//get content by date and layout
+		newRoomsBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
 				final Document doc;
@@ -232,19 +335,12 @@ public class ViewRoomsScreen implements Screen{
 								like.setDisabled(true);
 							}
 						});
-						rightPaneContent.add(like).height(50).width(50).row();
+						rightPaneContent.add(like).height(Gdx.graphics.getHeight()/10).width(Gdx.graphics.getWidth()/10).row();
 
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			}
-		});
-		//get content by date and layout
-		newRoomsBtn.addListener(new ClickListener() {
-			@Override
-			public void clicked(InputEvent event, float x, float y) {
-
 			}
 		});
 

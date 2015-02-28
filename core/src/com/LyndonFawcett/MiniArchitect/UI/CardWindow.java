@@ -45,6 +45,8 @@ public class CardWindow extends Window{
 				for (int i = 0; i < arr.length(); i++)
 				{
 					String text = arr.getJSONObject(i).getString("text");
+					
+
 					//add card to window
 					content.add(new Label(text, skin, "24")).row();
 
@@ -55,13 +57,14 @@ public class CardWindow extends Window{
 				{
 					String text = arr.getJSONObject(i).getString("text");
 					String imagepath = arr.getJSONObject(i).getString("image");
+					String price =arr.getJSONObject(i).getString("price");
 					//add card to window
 					Table card = new Table(skin);
 					file = Gdx.files.local("downloaded/models/"+imagepath);
 
 					card.add(new ImageButton((Drawable) new TextureRegionDrawable(new TextureRegion(new Texture(file)))));
-					card.add(new Label(text,skin,"24"));
-					content.add(card).align(Align.center).row();
+					card.add(new Label(text+" "+price,skin,"24"));
+					content.add(card).align(Align.center).pad(10).row();
 				}
 			}	
 		} catch (JSONException e) {

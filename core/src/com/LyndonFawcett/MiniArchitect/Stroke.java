@@ -4,10 +4,12 @@ package com.LyndonFawcett.MiniArchitect;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 import com.LyndonFawcett.MiniArchitect.UI.PublishWindow;
 import com.LyndonFawcett.MiniArchitect.screens.MenuScreen;
+import com.LyndonFawcett.MiniArchitect.utils.Notification;
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.Game;
@@ -20,6 +22,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
@@ -28,8 +31,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -45,8 +52,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.scenes.scene2d.ui.Tree;
-import com.badlogic.gdx.scenes.scene2d.ui.Tree.Node;
 
 import dollarN.NBestList;
 import dollarN.NDollarRecognizer;
@@ -75,7 +80,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 	public float zoom = 1.0f;
 	int SPRITECOUNT=400;
 	int pointer=0;
-	protected Stage stage;
+	public static Stage stage;
 	public Button paintBtn,grabBtn;
 	public static Button deleteBox;
 	Texture table,chair,light,tv,sofa;
@@ -93,6 +98,10 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 	Texture texture1;
 	int	camPointer;
 	Window window;
+	static Label runningCost;
+	
+	boolean debug = false;
+	private Button resetCamBtn;
 	public static void wipeDrawings(){
 		sketch.clear();
 	}
@@ -104,17 +113,20 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 				Gdx.app.log("Time", System.currentTimeMillis()+"");
 				//Load gestures
 
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall.xml", FileType.Internal).read());
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/light.xml", FileType.Internal).read());
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/table.xml", FileType.Internal).read());
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/table2.xml", FileType.Internal).read());
+				//_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall.xml", FileType.Internal).read());
+				//_rec.LoadGesture(Gdx.files.getFileHandle("gestures/light.xml", FileType.Internal).read());
+				//_rec.LoadGesture(Gdx.files.getFileHandle("gestures/table.xml", FileType.Internal).read());
+				//_rec.LoadGesture(Gdx.files.getFileHandle("gestures/table2.xml", FileType.Internal).read());
+				//_rec.LoadGesture(Gdx.files.getFileHandle("gestures/circle.xml", FileType.Internal).read());
+				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/circle2.xml", FileType.Internal).read());
+				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/X.xml", FileType.Internal).read());
 				//_rec.LoadGesture(Gdx.files.getFileHandle("table3.xml", FileType.Internal).read());
 				//_rec.LoadGesture(Gdx.files.getFileHandle("table4.xml", FileType.Internal).read());
 				//_rec.LoadGesture(Gdx.files.getFileHandle("tv.xml", FileType.Internal).read()); //takes 3 seconds to load
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/chair2.xml", FileType.Internal).read());
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall.xml", FileType.Internal).read());
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall2.xml", FileType.Internal).read());
-				_rec.LoadGesture(Gdx.files.getFileHandle("gestures/chair.xml", FileType.Internal).read());
+				//	_rec.LoadGesture(Gdx.files.getFileHandle("gestures/chair2.xml", FileType.Internal).read());
+				//	_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall.xml", FileType.Internal).read());
+				//	_rec.LoadGesture(Gdx.files.getFileHandle("gestures/wall2.xml", FileType.Internal).read());
+				//	_rec.LoadGesture(Gdx.files.getFileHandle("gestures/chair.xml", FileType.Internal).read());
 				//_rec.LoadGesture(Gdx.files.getFileHandle("circle.xml", FileType.Internal).read());
 			}
 		});
@@ -135,6 +147,9 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 		//tableTexture = new Texture(Gdx.files.internal("Table.png"));
 
+		paint=false;
+		grab=false;
+
 		//setup ui
 		cam = new OrthographicCamera(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		//viewport = new FitViewport(1920, 1080, cam);
@@ -151,16 +166,18 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		pixmap.fill();
 		skin.add("white", new Texture(pixmap));
 
-		fpsLabel = new Label("fps:", skinText, "24");
+
 		stage = new Stage(new ScreenViewport());
-		fpsLabel.setPosition(0, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
+		if(debug){
+			fpsLabel = new Label("fps:", skinText, "24");
+			fpsLabel.setPosition(0, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
+		}
 
 
-
-
-		resultLabel = new Label("Result:", skinText, "24");
-		resultLabel.setPosition(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
-
+		if(debug){
+			resultLabel = new Label("Result:", skinText, "24");
+			resultLabel.setPosition(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()-fpsLabel.getHeight()-10);
+		}
 
 		ArrayList<String> furn = new ArrayList<String>();
 		if (Gdx.app.getType() == ApplicationType.Android){
@@ -192,19 +209,34 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		ArrayList<TextButton> diningroom = new ArrayList<TextButton>();
 		ArrayList<TextButton> kitchen = new ArrayList<TextButton>();
 		ArrayList<TextButton> office = new ArrayList<TextButton>();
+		String[] repAll = {".g3db","_","room","living","dining","foundation"};
+		String[] repFirst = {"bed","draws","shelf","office","table","chair","tv","sofa","cabinet","diningroom","bathroom","kitchen","bed","bedroom","livingroom","door","window","wardrobe"};
+ 		for(final String s:furn){
+ 			
+ 			
+ 			String tempStr = s;
+ 			
+ 			for(int i = 0; i<repAll.length;i++)
+ 				tempStr = tempStr.replaceAll(repAll[i], "");
 
+ 			for(int i = 0; i<repFirst.length;i++)
+ 				tempStr = tempStr.replaceFirst(repFirst[i], "");
+ 		
+ 			
+ 			/*
+ 			 * 
+					s.replaceAll(".g3db", "")+"\n\n").replaceAll("", "").replaceAll("_", "")
+					.replaceFirst("table", "").replaceFirst("chair", "").replaceFirst("tv", "").replaceFirst("sofa", "")
+					.replace("livingroom", "").replace("diningroom", "").replaceFirst("bathroom", "").replace("kitchen", "")
+					.replaceFirst("office", "").replace("foundation", "").replace("bedroom", "").replaceFirst("bed", "").replaceFirst("door", "")*/
+ 			
 
-		for(final String s:furn){
-			TextButton listItem = new TextButton(("\n"+
-		s.replaceAll(".g3db", "")+"\n\n").replaceAll("", "").replaceAll("_", "")
-		.replaceFirst("table", "").replaceFirst("chair", "").replaceFirst("tv", "").replaceFirst("sofa", "")
-		.replace("livingroom", "").replace("diningroom", "").replaceFirst("bathroom", "").replace("kitchen", "")
-		.replaceFirst("office", "").replace("foundation", "").replace("bedroom", "").replaceFirst("bed", "").trim()
-					, skinText,"list");
+ 			//tempStr = tempStr.replaceAll("[0-9]","");
+ 			
+			TextButton listItem = new TextButton(tempStr.trim().replace("QQQ", "£"), skinText,"list");
 			//Check that it is actually a model file that has been downloaded
 			if(s.contains("g3db"))
 				if(s.contains("livingroom")){
-					System.out.println("living room item added :" +s);
 					livingroom.add(listItem);
 				}
 				else if(s.contains("diningroom")){
@@ -225,17 +257,17 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 				else if(s.contains("foundation")){
 					foundation.add(listItem);
 				}
-				//misc item
+			//misc item
 				else {
 					System.out.println("WARNING misc item added :" +s);
 					misc.add(listItem);
 				}
-				
+
 			//listItem.setAlignment(Align.center);
 			listItem.addListener(new InputListener(){
 				public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
 					return true;
-			 	}
+				}
 				public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
 					if(!scroll.isFlinging()&&!scroll.isDragging()&&!scroll.isPanning()){
 						Gdx.app.log("Model added", s);
@@ -243,7 +275,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 					}
 				}
 			});
-			
+
 			//add new item to list
 			//list.add(listItem);
 		}
@@ -258,7 +290,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 			boolean creating = false;
 			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
 				return true;
-		 	}
+			}
 
 			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
 				if(!scroll.isFlinging()&&!scroll.isDragging()&&!scroll.isPanning()){
@@ -291,24 +323,24 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		final Table kitchencontent = new Table(skin);
 		final Table bathroomcontent = new Table(skin);
 		final Table misccontent = new Table(skin);
-		
+
 		float padding = 50;
 		for(TextButton l:livingroom)
-			livingroomcontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			livingroomcontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:kitchen)
-			kitchencontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			kitchencontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:diningroom)
-			diningroomcontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			diningroomcontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:bedroom)
-			bedroomcontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			bedroomcontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:office)
-			officecontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			officecontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:bathroom)
-			bathroomcontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			bathroomcontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:foundation)
-			foundationcontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			foundationcontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		for(TextButton l:misc)
-			misccontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
+			misccontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(padding).row();
 		misccontent.pad(10,100,10,100);
 		foundationcontent.pad(10,100,10,100);
 		livingroomcontent.pad(10,100,10,100);
@@ -317,14 +349,13 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		kitchencontent.pad(10,100,10,100);
 		bedroomcontent.pad(10,100,10,100);
 		ImageButton backButton = new ImageButton(skin, "back");
-
 		ImageButton publish = new ImageButton(skin, "publish");
 		final PublishWindow pubWin = new PublishWindow(skin);
 		publish.setSize(Gdx.graphics.getWidth()/10, Gdx.graphics.getHeight()/10);
 		publish.addListener(new InputListener(){
 			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
 				return true;
-		 	}
+			}
 
 			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
 				//open window to publish created room
@@ -332,31 +363,30 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 				pubWin.setVisible(true);
 			}
 		});
-		
-		
-		publish.setPosition((Gdx.graphics.getWidth()/2)-publish.getWidth()/2, Gdx.graphics.getHeight()-(publish.getHeight()+10));
+
+
+		publish.setPosition((Gdx.graphics.getWidth()/1.7f)-publish.getWidth()/2, Gdx.graphics.getHeight()-(publish.getHeight()+10));
 		stage.addActor(publish);
 
 		titleTable.add(backButton).size(Gdx.graphics.getWidth()/10, Gdx.graphics.getHeight()/10).align(Align.left).padRight(20);
-		final Label title = new Label("            HOME", skin, "24");
+		final Label title = new Label("          HOME", skin, "24");
 		titleTable.add(title);
-		
-		
-		
-		
-		
+
+
+
+
 		final Table homecontent = new Table(skin);
-		
-		
+
+
 		backButton.addListener(new InputListener(){
 			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
 				scroll.setWidget(homecontent);
-				title.setText("            HOME");
+				title.setText("          HOME");
 				return true;
-		 	}
+			}
 
 			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-				
+
 			}
 		});
 
@@ -364,71 +394,71 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 		String categories[] = {"LIVING ROOM","KITCHEN","DINING ROOM","BEDROOM","OFFICE","BATHROOM","FOUNDATION","MISC"};
 		for(final String s:categories){
-		TextButton l = new TextButton(s,skin,"black");
-		l.addListener(new InputListener(){
-			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-				return true;
-		 	}
-
-			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-				System.out.println("label " +s);
-				if(!scroll.isFlinging()&&!scroll.isDragging()&&!scroll.isPanning()){
-
-					if(s.contains("LIVING ROOM")){
-						scroll.setWidget(livingroomcontent);
-						title.setText("LIVING ROOM");
-					}
-					if(s.contains("BEDROOM")){
-						scroll.setWidget(bedroomcontent);
-						title.setText("     BEDROOM");
-					}
-					if(s.contains("KITCHEN")){
-						scroll.setWidget(kitchencontent);
-						title.setText("      KITCHEN");
-					}
-					if(s.contains("BATHROOM")){
-						scroll.setWidget(bathroomcontent);
-						title.setText("LIVING ROOM");
-					}
-					if(s.contains("DINING ROOM")){
-						scroll.setWidget(diningroomcontent);
-						title.setText("DINING ROOM");
-					}
-					if(s.contains("OFFICE")){
-						scroll.setWidget(officecontent);
-						title.setText("    OFFICE");
-					}
-					if(s.contains("FOUNDATION")){
-						scroll.setWidget(foundationcontent);
-						title.setText(" FOUNDATION");
-					}
-					if(s.contains("MISC")){
-						scroll.setWidget(misccontent);
-						title.setText("          MISC");
-					}
-					
+			TextButton l = new TextButton(s,skin,"black");
+			l.addListener(new InputListener(){
+				public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+					return true;
 				}
-			}
-		});
-		homecontent.add(l).width(Gdx.graphics.getWidth()/6).padBottom(50).row();
+
+				public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+					System.out.println("label " +s);
+					if(!scroll.isFlinging()&&!scroll.isDragging()&&!scroll.isPanning()){
+
+						if(s.contains("LIVING ROOM")){
+							scroll.setWidget(livingroomcontent);
+							title.setText("LIVING ROOM");
+						}
+						if(s.contains("BEDROOM")){
+							scroll.setWidget(bedroomcontent);
+							title.setText("   BEDROOM");
+						}
+						if(s.contains("KITCHEN")){
+							scroll.setWidget(kitchencontent);
+							title.setText("    KITCHEN");
+						}
+						if(s.contains("BATHROOM")){
+							scroll.setWidget(bathroomcontent);
+							title.setText("LIVING ROOM");
+						}
+						if(s.contains("DINING ROOM")){
+							scroll.setWidget(diningroomcontent);
+							title.setText("DINING ROOM");
+						}
+						if(s.contains("OFFICE")){
+							scroll.setWidget(officecontent);
+							title.setText("   OFFICE");
+						}
+						if(s.contains("FOUNDATION")){
+							scroll.setWidget(foundationcontent);
+							title.setText(" FOUNDATION");
+						}
+						if(s.contains("MISC")){
+							scroll.setWidget(misccontent);
+							title.setText("         MISC");
+						}
+
+					}
+				}
+			});
+			homecontent.add(l).height(Gdx.graphics.getHeight()/12).width(Gdx.graphics.getWidth()/6).padBottom(50).row();
 
 		}
-		
-		
-/*
+
+
+		/*
 		//add list of models to content
 		for(Label l:list){
 			content.add(l).minWidth(Gdx.graphics.getWidth()/6).minHeight(Gdx.graphics.getWidth()/6).fill();
 			content.row();
 		}
-		
-		*/
-		
+
+		 */
+
 		homecontent.setHeight(Gdx.graphics.getHeight());
 
-		
 
-		
+
+
 		scroll.setWidget(homecontent); 
 		//scroll.getV
 		scroll.setScrollingDisabled(true, false);
@@ -449,20 +479,31 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 
 
-		paintBtn=new Button(skin);
-		paintBtn.add(new Label("Paint",skinText, "24"));
+		grabBtn=new ImageButton(skin, "grab");
+
+		paintBtn=new ImageButton(skin,"pencil");
+		//paintBtn.add(new Label("Paint",skinText, "24"));
 		paintBtn.setColor(1, 0, 0, 1);
-		paintBtn.setPosition(100*Gdx.graphics.getDensity(), 50*Gdx.graphics.getDensity()); //** Button location **//
-		paintBtn.setHeight(40*Gdx.graphics.getDensity()); //** Button Height **//
-		paintBtn.setWidth(40*Gdx.graphics.getDensity()); //** Button Width **//
+		paintBtn.setPosition(Gdx.graphics.getWidth()/6, Gdx.graphics.getHeight()/12); //** Button location **//
+		paintBtn.setHeight(Gdx.graphics.getWidth()/8); //** Button Height **//
+		paintBtn.setWidth(Gdx.graphics.getHeight()/8); //** Button Width **//
 		paintBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
 				if(paint)
 					paint=false;
-				else
+				else{
 					paint= true;
+					paintBtn.setChecked(true);
+
+					if(grab)
+						multiplexer.removeProcessor(camPointer);
+				}
+				grabBtn.setChecked(false);
+
 				grab=false;
+				System.out.println("Stopped grabbing");
+
 			}
 		});
 
@@ -470,8 +511,8 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		camBtn.add(new Label("2D/3D",skinText, "24"));
 		camBtn.setColor(0, 0, 0, 1);
 		camBtn.setPosition(25*Gdx.graphics.getDensity(), 300*Gdx.graphics.getDensity()); //** Button location **//
-		camBtn.setHeight(40*Gdx.graphics.getDensity()); //** Button Height **//
-		camBtn.setWidth(40*Gdx.graphics.getDensity()); //** Button Width **//
+		camBtn.setHeight(Gdx.graphics.getWidth()/8); //** Button Height **//
+		camBtn.setWidth(Gdx.graphics.getHeight()/8); //** Button Width **//
 		camBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -481,35 +522,66 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 					pCamOn = true;
 			}
 		});
+		
+		
+		
+		resetCamBtn=new ImageButton(skin,"restore");
+		resetCamBtn.setPosition(Gdx.graphics.getWidth()/18, Gdx.graphics.getHeight()/2.8f); //** Button location **//
+		resetCamBtn.setHeight(Gdx.graphics.getWidth()/8); //** Button Height **//
+		resetCamBtn.setWidth(Gdx.graphics.getHeight()/8); //** Button Width **//
+		resetCamBtn.addListener(new ClickListener(){
+			@Override
+			public void clicked(InputEvent event, float x, float y) {
+			Arena.pCam.position.set(new Vector3(0f, 10f, 0f));
+			Arena.pCam.lookAt(new Vector3(0,0,0));
+			//Arena.pCam.combined.setToRotation(new Vector3(), 0);
 
-		grabBtn=new Button(skin);
-		grabBtn.add(new Label("Grab",skinText, "24"));
+
+			}
+		});
+		
+		
+		
+		stage.addActor(resetCamBtn);
+		
+		
+
+		//grabBtn.add(new Label("Grab",skinText, "24"));
 		grabBtn.setColor(0, 0, 1, 1);
-		grabBtn.setPosition(25*Gdx.graphics.getDensity(), 150*Gdx.graphics.getDensity()); //** Button location **//
-		grabBtn.setHeight(40*Gdx.graphics.getDensity()); //** Button Height **//
-		grabBtn.setWidth(40*Gdx.graphics.getDensity()); //** Button Width **//
+		grabBtn.setPosition(Gdx.graphics.getWidth()/10, Gdx.graphics.getHeight()/12); //** Button location **//
+		grabBtn.setHeight(Gdx.graphics.getWidth()/8); //** Button Height **//
+		grabBtn.setWidth(Gdx.graphics.getHeight()/8); //** Button Width **//
 		grabBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
+
 				if(grab){
+					System.out.println("Stopped grabbing");
+
 					grab =false;
 					multiplexer.removeProcessor(camPointer);
 				}
 				else{
+
+					System.out.println("Grabing");
+					grabBtn.setChecked(true);
 					camPointer=multiplexer.size();
 					multiplexer.addProcessor(camPointer, Arena.camController);
 					grab=true;
 				}
+				paintBtn.setChecked(false);
 				paint=false;
 			}
 		});
 
 		stage.addActor(deleteBox);
-		stage.addActor(camBtn);
+		//stage.addActor(camBtn);
 		stage.addActor(grabBtn);
 		stage.addActor(paintBtn);
-		stage.addActor(fpsLabel);
-		stage.addActor(resultLabel);
+		if(debug){
+			stage.addActor(fpsLabel);
+			stage.addActor(resultLabel);
+		}
 		stage.addActor(window);
 		if(multiplexer == null)
 			multiplexer = new InputMultiplexer();
@@ -533,6 +605,17 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		colour.fill();
 
 		pixel=new Sprite(new Texture(colour), 4,4);
+		
+		
+		
+		
+		//Create total cost lable
+		runningCost = new Label("0",skin,"24");
+		runningCost.setPosition((float) (Gdx.graphics.getWidth()/1.5), Gdx.graphics.getHeight()-runningCost.getHeight()-50);
+		stage.addActor(runningCost);
+		
+		
+		
 		cam.update();
 
 
@@ -555,8 +638,8 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 		Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-		fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond() + " || RAM USED: "+Gdx.app.getJavaHeap()/131072 +"MB");
+		if(debug)
+			fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond() + " || RAM USED: "+Gdx.app.getJavaHeap()/131072 +"MB");
 		batch.setProjectionMatrix(cam.combined);
 		batch.begin();
 		batch.draw(background, -Gdx.graphics.getWidth()/2,-Gdx.graphics.getHeight()/2,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
@@ -593,9 +676,15 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		colourDebug.dispose();
 		background.dispose();
 		stage.dispose();
+		int count =0;
+		for(count = 0; count < multiplexer.size();count++)
+			multiplexer.removeProcessor(count);
 		multiplexer.clear();
-		this.dispose();
+		arenaDispose();
+		//this.dispose();
 	}
+
+	abstract public void arenaDispose();
 
 	@Override
 	public boolean keyDown(int keycode) {
@@ -622,6 +711,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		lastPos = new Vector2(screenX, screenY);
 		fingers++;
+		System.out.println("Fingers touching"+fingers);
 		if (fingers == 3){
 			wait = System.nanoTime();
 			gesture();
@@ -638,6 +728,8 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		drawingData.clear();
 		points.clear();
 		fingers--;
+		if(fingers <0)
+			fingers=0;
 		return false;
 	}
 
@@ -646,7 +738,12 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 	int slow = 0;
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int p) {
-
+		if(paint && System.nanoTime()-wait > 900000000L){
+			Vector3 planeIntersection = new Vector3();
+			//calculate where point intersects with z plane
+			Intersector.intersectRayPlane(Arena.pCam.getPickRay(screenX, screenY), xzPlane, planeIntersection);
+			rays.add(planeIntersection);
+		}
 		return false;
 	}
 
@@ -657,6 +754,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 	@Override
 	public boolean scrolled(int amount) {
+		
 		return false;
 	}
 	public float initialScale = 1.0f;
@@ -682,6 +780,10 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		return false;
 	}
 
+	Vector3 boxIntersection = new Vector3();
+	final Plane xzPlane = new Plane(new Vector3(0, 1, 0), 0);
+
+	ArrayList<Vector3> rays = new ArrayList<Vector3>();
 	@Override
 	public boolean pan(float x, float y, float deltaX, float deltaY) {
 
@@ -796,8 +898,9 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		}
 	}
 
-
+	//When user three finger presses calculate their gesture
 	public void gesture(){
+		Gdx.app.log("Gesture", "checking");
 		try{
 			if (strokes.size() > 0) {
 				Vector<PointR> allPoints = new Vector<PointR>();
@@ -830,7 +933,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 						+ Utils.round(result.getScore(), 2) + ")");*/
 				}
 				System.out.println(resultTxt);
-
+				/*
 				//fetch name that can be used to match image/ obj
 				if(result.getName().replaceAll("[0-9]","").contains("chair")){
 					Item i =new Item(chair);				
@@ -860,14 +963,152 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 					i.setBounds(10,10,200,200);
 					furnishings.add(i);
 				}
+				 */
+				float lowX = rays.get(0).x;
+				float lowZ = rays.get(0).z;
+				float highX = rays.get(0).x;
+				float highZ = rays.get(0).z;
+				//resultLabel.setText(resultTxt);
+				if(result.getName().replaceAll("[0-9]","").contains("circle")){
+					//If result text is a circle over 2
+					//Calculate raycasts from 2D points
+					System.out.println("Points");
+					for(Vector3 p :rays){
+						if(p.x < lowX)
+							lowX=p.x;
+						if(p.x > highX)
+							highX=p.x;
+						if(p.z < lowZ)
+							lowZ=p.z;
+						if(p.z > highZ)
+							highZ=p.z;
+					}
+
+					for(ArenaItem i :Arena.instances){
+						i.group.clear();
+					}
+
+					
+
+					//Get box dimensions from raycasts (maybe make a bounding box?)
+					BoundingBox selection = new BoundingBox(new Vector3(lowX,-1f,lowZ),new Vector3(highX,1f,highZ));
+					//Print out all objects in that box
+					System.out.println(selection.min + "     " + selection.max);
+					final ArrayList <ArenaItem> undoItems = new ArrayList<ArenaItem>();
+					
+					for(ArenaItem i :Arena.instances){
+						Vector3 trans = i.transform.getTranslation(new Vector3());
+
+						//Deselect model
+						i.draggable=false;
+						i.selected=false;
+						//Crash point
+						Arena.wireFrames.remove(i.wire);
+						i.wire=null;
+						
+						
+						//all objects in area
+						if(trans.x>lowX&&trans.z>lowZ&&trans.x<highX&&trans.z<highZ){
+							System.out.println(i.modelName);
+							System.out.println(Arena.instances.size);
+							//Add pointers to each model in model for every model
+							undoItems.add(i);
+
+							for(int count = 0; count<Arena.instances.size; count++){
+								System.out.println("Checking groupie");
+								ArenaItem groupie=Arena.instances.get(count);
+								if(groupie.equals(i))
+									continue;
+								trans = groupie.transform.getTranslation(new Vector3());
+								//if other object is in same group add it!
+
+								if(trans.x>lowX&&trans.z>lowZ&&trans.x<highX&&trans.z<highZ)
+									i.group.add(groupie);
+							}
+							i.createWire();
+						}
+					}
+					
+					TextButton b = new TextButton("UNDO",skin,"bad");
+					b.addListener(new ClickListener(){
+						@Override
+						public void clicked(InputEvent event, float x, float y) {
+							//undo group select
+							for(ArenaItem i :undoItems){
+								Arena.wireFrames.remove(i.wire);
+								i.group.clear();
+							}
+						}
+					});
+					
+					new Notification(stage,skin,b);
+					
+					paint = false;
+					paintBtn.setChecked(false);
+					
+
+				}
 
 
 
 
-				resultLabel.setText(resultTxt);
-				points.clear();
+				else if(result.getName().replaceAll("[0-9]","").contains("X")){
+					//If result text is a circle over 2
+					//Calculate raycasts from 2D points
+					System.out.println("Points");
+					for(Vector3 p :rays){
+						if(p.x < lowX)
+							lowX=p.x;
+						if(p.x > highX)
+							highX=p.x;
+						if(p.z < lowZ)
+							lowZ=p.z;
+						if(p.z > highZ)
+							highZ=p.z;
+					}
+
+					
+
+					//Get box dimensions from raycasts (maybe make a bounding box?)
+					BoundingBox selection = new BoundingBox(new Vector3(lowX,-1f,lowZ),new Vector3(highX,1f,highZ));
+					//Print out all objects in that box
+					System.out.println(selection.min + "     " + selection.max);
+					final ArrayList <ArenaItem> undoItems = new ArrayList<ArenaItem>();
+					
+					for(ArenaItem i :Arena.instances){
+						Vector3 trans = i.transform.getTranslation(new Vector3());
+
+						//Deselect model
+						i.draggable=false;
+						i.selected=false;
+						//Crash point
+						Arena.wireFrames.remove(i.wire);
+						i.wire=null;
+						
+						
+						
+						if(trans.x>lowX&&trans.z>lowZ&&trans.x<highX&&trans.z<highZ){
+							i.group.clear();
+						}
+					}
+					
+
+					
+					new Notification(stage,skin,new Label("Removed group",skin,"24"));
+					
+					paint = false;
+					paintBtn.setChecked(false);
+					
+
+				}
+
+
+
+
 			}
+
 			//Wipe current set for next gesture
+			rays.clear();
 			points.clear();
 			sketch.clear();
 			drawingData.clear();

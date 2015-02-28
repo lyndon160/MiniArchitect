@@ -9,16 +9,13 @@ import com.LyndonFawcett.MiniArchitect.Arena;
 import com.LyndonFawcett.MiniArchitect.ArenaItem;
 import com.LyndonFawcett.MiniArchitect.Start;
 import com.LyndonFawcett.MiniArchitect.utils.MinimalItem;
+import com.LyndonFawcett.MiniArchitect.utils.Notification;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Net.HttpMethods;
-import com.badlogic.gdx.Net.HttpRequest;
-import com.badlogic.gdx.Net.HttpResponse;
-import com.badlogic.gdx.Net.HttpResponseListener;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
@@ -28,13 +25,17 @@ public class PublishWindow extends Window{
 	TextField roomName;
 	TextButton publish, cancel;
 	
-	public PublishWindow(Skin skin) {
-		super("Publish", skin, "chalk");
+	public PublishWindow(final Skin skin) {
+		super("Publish", skin, "default");
 		this.setPosition((Gdx.graphics.getWidth()/2)-this.getWidth(), (Gdx.graphics.getHeight()/2));
-		this.add(new Label("Room name :",skin,"24"));
+		this.add(new Label("Enter room description",skin,"24")).width(Gdx.graphics.getWidth()/2).row();
 		roomName = new TextField("",skin);
-		publish = new TextButton("PUBLISH",skin,"24");
-		cancel = new TextButton("CANCEL",skin,"24");
+		publish = new TextButton("PUBLISH",skin,"good");
+		cancel = new TextButton("CANCEL",skin,"bad");
+		Table buttonTable = new Table(skin);
+		buttonTable.add(cancel).padRight(Gdx.graphics.getWidth()/3);
+		buttonTable.add(publish);
+
 		final PublishWindow handle = this;
 		
 		publish.addListener(new InputListener(){
@@ -43,8 +44,11 @@ public class PublishWindow extends Window{
 		 	}
 
 			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+				if(Arena.instances.size<1 || roomName.getText().length() == 0)
+					return;
 				Json json = new Json();
 				ArrayList<MinimalItem> temp = new ArrayList<MinimalItem>();
+	
 				for(ArenaItem i :Arena.instances)
 					temp.add(new MinimalItem(i));
 
@@ -97,7 +101,7 @@ public class PublishWindow extends Window{
 				
 				
 				
-				
+				new Notification(getStage(),skin,new Label("ROOM PUBLISHED",skin,"24"));
 				
 				
 				handle.setVisible(false);
@@ -115,9 +119,9 @@ public class PublishWindow extends Window{
 				handle.setVisible(false);
 			}
 		});
-		this.add(roomName).row();
-		this.add(cancel);
-		this.add(publish);
+		
+		this.add(roomName).width(Gdx.graphics.getWidth()/2).padBottom(20).row();
+		this.add(buttonTable);
 		this.pack();
 	}
 

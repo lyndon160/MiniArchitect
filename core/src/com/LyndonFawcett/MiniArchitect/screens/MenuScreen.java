@@ -14,7 +14,9 @@ import aurelienribon.tweenengine.Tween;
 import aurelienribon.tweenengine.TweenCallback;
 import aurelienribon.tweenengine.TweenManager;
 
+import com.LyndonFawcett.MiniArchitect.Start;
 import com.LyndonFawcett.MiniArchitect.UI.CardWindow;
+import com.LyndonFawcett.MiniArchitect.UI.ChangeUsernameWindow;
 import com.LyndonFawcett.MiniArchitect.tween.ActorAccessor;
 import com.LyndonFawcett.MiniArchitect.utils.Updater;
 import com.badlogic.gdx.Files.FileType;
@@ -28,12 +30,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 
 
@@ -50,6 +52,7 @@ public class MenuScreen implements Screen{
 	private Table tablecol;
 	private Table tabletitle;
 	private Timer autoModeTimer;
+	static public Label userLabel; 
 	@Override
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -93,36 +96,38 @@ public class MenuScreen implements Screen{
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
+				Timeline.createParallel().beginParallel()
+				.push(Tween.to(tablecol, ActorAccessor.ALPHA, .75f).target(0))
+				.push(Tween.to(tablecol, ActorAccessor.Y, .75f).target(table.getY() - 50)
+						.setCallback(new TweenCallback() {
 
-					@Override
-					public void run() {
-						((Game) Gdx.app.getApplicationListener()).setScreen(new ViewRoomsScreen());
-					}
-				})));
+							@Override
+							public void onEvent(int type, BaseTween<?> source) {
+								((Game) Gdx.app.getApplicationListener()).setScreen(new ViewRoomsScreen());
+							}
+						}))
+				.end().start(tweenManager);
 			}
 		});
 		buttonView.pad(15);
 
+		//Username label
+		userLabel = new Label(Start.username,skin,"24");
+		userLabel.setPosition(10, Gdx.graphics.getHeight()-userLabel.getHeight());
+		stage.addActor(userLabel);
 		
-		
-		
-		
-		TextButton settings = new TextButton("SETTINGS", skin, "32");
-		settings.addListener(new ClickListener() {
-
+		ImageButton settingsBtn = new ImageButton(skin, "settings");
+		settingsBtn.setBounds(Gdx.graphics.getWidth()-Gdx.graphics.getWidth()/10, Gdx.graphics.getHeight()-Gdx.graphics.getHeight()/9,Gdx.graphics.getWidth()/10, Gdx.graphics.getHeight()/10);
+		stage.addActor(settingsBtn);
+		settingsBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
+				stage.addActor(new ChangeUsernameWindow(skin));
+			
+			}});
+			
+		
 
-					@Override
-					public void run() {
-						//((Game) Gdx.app.getApplicationListener()).setScreen(new Settings());
-					}
-				})));
-			}
-		});
-		settings.pad(15);
 
 		FileHandle file = Gdx.files.local("downloaded/news/news.txt");
 	
@@ -196,12 +201,10 @@ public class MenuScreen implements Screen{
 				.push(Tween.set(buttonView, ActorAccessor.ALPHA).target(0))
 				.push(Tween.set(news, ActorAccessor.ALPHA).target(0))
 				.push(Tween.set(buttonCreate, ActorAccessor.ALPHA).target(0))
-				.push(Tween.set(settings, ActorAccessor.ALPHA).target(0))
 				.push(Tween.from(heading, ActorAccessor.ALPHA, FADETIME).target(0))
 				.push(Tween.to(buttonView, ActorAccessor.ALPHA, FADETIME).target(1))
 				.push(Tween.to(news, ActorAccessor.ALPHA, FADETIME).target(1))
 				.push(Tween.to(buttonCreate, ActorAccessor.ALPHA, FADETIME).target(1))
-				.push(Tween.to(settings, ActorAccessor.ALPHA, FADETIME).target(1))
 				.end().start(tweenManager);
 
 		// table fade-in

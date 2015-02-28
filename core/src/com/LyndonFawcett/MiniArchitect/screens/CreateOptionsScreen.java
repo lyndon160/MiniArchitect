@@ -74,9 +74,8 @@ public class CreateOptionsScreen implements Screen,InputProcessor{
 		skin = new Skin(Gdx.files.internal("ChalkUi/uiskin.json"));
 
 		table = new Table(skin);
-		table.setFillParent(true);
-	//	table.debug();
 
+		Table titleTable = new Table(skin);
 
 		// creating heading
 		Label heading = new Label("ROOM CREATION", skin, "48");
@@ -87,15 +86,17 @@ public class CreateOptionsScreen implements Screen,InputProcessor{
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
+				Timeline.createParallel().beginParallel()
+				.push(Tween.to(table, ActorAccessor.ALPHA, .75f).target(0))
+				.push(Tween.to(table, ActorAccessor.Y, .75f).target(table.getY() - 50)
+						.setCallback(new TweenCallback() {
 
-					@Override
-					public void run() {
-						//Get rid of old settings
-						Arena.instances = null;
-					 ((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
-					}
-				})));
+							@Override
+							public void onEvent(int type, BaseTween<?> source) {
+								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
+							}
+						}))
+				.end().start(tweenManager);
 			}
 		});
 		buttonView.pad(15);
@@ -160,16 +161,20 @@ public class CreateOptionsScreen implements Screen,InputProcessor{
 		});
 		buttonCreate.pad(15);
 
-
+		Table wrapperTable = new Table(skin);
+		wrapperTable.center();
+		wrapperTable.setFillParent(true);
 		// putting stuff together
-		table.add(heading).spaceBottom(80).row();
+		titleTable.add(heading);
+		//table.add(heading).spaceBottom(80).row();
 		table.add(buttonView).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f);
 		table.add(settings).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f).row();
 		table.add(buttonCreate).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f);
 		table.add(news).space(15).width(Gdx.graphics.getWidth() / 2.3f).height(Gdx.graphics.getHeight() / 2.67f);
-		
-
-		stage.addActor(table);
+		wrapperTable.add(titleTable).space(20).row();
+		wrapperTable.add(table);
+	//	stage.addActor(titleTable);
+		stage.addActor(wrapperTable);
 
 		// creating animations
 		tweenManager = new TweenManager();
@@ -201,8 +206,8 @@ public class CreateOptionsScreen implements Screen,InputProcessor{
 				.end().start(tweenManager);
 
 		// table fade-in
-		Tween.from(table, ActorAccessor.ALPHA, 1.75f).target(0).start(tweenManager);
-		Tween.from(table, ActorAccessor.Y, 1.75f).target(Gdx.graphics.getHeight() / 8).start(tweenManager);
+		Tween.from(wrapperTable, ActorAccessor.ALPHA, 1.75f).target(0).start(tweenManager);
+		Tween.from(wrapperTable, ActorAccessor.Y, 1.75f).target(Gdx.graphics.getHeight() / 8).start(tweenManager);
 
 		tweenManager.update(Gdx.graphics.getDeltaTime());
 		

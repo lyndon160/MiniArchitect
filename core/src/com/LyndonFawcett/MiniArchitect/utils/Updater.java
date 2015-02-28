@@ -35,7 +35,7 @@ public class Updater {
 			for (final Element link : links) {
 				//if contains g3db its a model!
 				// get the value from href attribute
-				if(link.text().contains("g3db")){
+				if(link.text().contains("g3db")||link.text().contains("png")){
 					Gdx.app.log("Link", link.text());
 
 					//check if already have model FIXME
