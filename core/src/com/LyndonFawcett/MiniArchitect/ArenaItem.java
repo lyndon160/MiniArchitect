@@ -272,8 +272,8 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 			//save rotation and move model to finger pos
 			Quaternion rot = this.transform.getRotation(new Quaternion());
 			this.transform.setTranslation(planeIntersection.x,0 ,planeIntersection.z);
-			System.out.println("Rotation :" + rot);
-			System.out.println("Location :" + this.planeIntersection);
+			//System.out.println("Rotation :" + rot);
+			//System.out.println("Location :" + this.planeIntersection);
 			//Move items in group
 			for(ArenaItem i: group){
 				i.transform.setTranslation(i.transform.getTranslation(new Vector3()).x - xDiff,0,i.transform.getTranslation(new Vector3()).z - zDiff);

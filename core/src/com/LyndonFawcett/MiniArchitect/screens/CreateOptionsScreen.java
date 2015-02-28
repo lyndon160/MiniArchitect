@@ -10,10 +10,13 @@ import aurelienribon.tweenengine.TweenCallback;
 import aurelienribon.tweenengine.TweenManager;
 
 import com.LyndonFawcett.MiniArchitect.Arena;
+import com.LyndonFawcett.MiniArchitect.ArenaItem;
+import com.LyndonFawcett.MiniArchitect.Stroke;
 import com.LyndonFawcett.MiniArchitect.tween.ActorAccessor;
 import com.LyndonFawcett.MiniArchitect.utils.Updater;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
@@ -29,6 +32,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
 
 public class CreateOptionsScreen implements Screen,InputProcessor{
 
@@ -93,6 +97,9 @@ public class CreateOptionsScreen implements Screen,InputProcessor{
 
 							@Override
 							public void onEvent(int type, BaseTween<?> source) {
+								Stroke.multiplexer = new InputMultiplexer();
+								Arena.instances  = new Array<ArenaItem>();
+								Stroke.stage=null;
 								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 							}
 						}))
