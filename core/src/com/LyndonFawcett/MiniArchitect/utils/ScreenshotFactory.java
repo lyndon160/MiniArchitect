@@ -2,17 +2,31 @@ package com.LyndonFawcett.MiniArchitect.utils;
 
 import java.nio.ByteBuffer;
 
+import com.LyndonFawcett.MiniArchitect.Arena;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.utils.ScreenUtils;
 
-
+/**
+ * 
+ * @author Lyndon
+ *
+ * Factory method that generates screen shots by pulling from the OpenGLES buffer
+ *
+ */
 public class ScreenshotFactory {
 
+	
+	
     private static int counter = 1;
+    /*
+     * Save screen shot to file location (named by count)
+     */
     public static void saveScreenshot(){
+
         try{
             FileHandle fh;
             do{
@@ -24,10 +38,12 @@ public class ScreenshotFactory {
         }catch (Exception e){           
         }
     }
-
+    /*
+     * Get current image of screen and return into a pixel map
+     */
     private static Pixmap getScreenshot(int x, int y, int w, int h, boolean yDown){
         final Pixmap pixmap = ScreenUtils.getFrameBufferPixmap(x, y, w, h);
-
+    	Camera pCam=Arena.pCam;//camera to take screenshot from
         if (yDown) {
             // Flip the pixmap upside down
             ByteBuffer pixels = pixmap.getPixels();

@@ -7,7 +7,7 @@ import org.jsoup.Jsoup;
 
 import com.LyndonFawcett.MiniArchitect.Arena;
 import com.LyndonFawcett.MiniArchitect.ArenaItem;
-import com.LyndonFawcett.MiniArchitect.Start;
+import com.LyndonFawcett.MiniArchitect.ApplicationWrapper;
 import com.LyndonFawcett.MiniArchitect.utils.MinimalItem;
 import com.LyndonFawcett.MiniArchitect.utils.Notification;
 import com.badlogic.gdx.Gdx;
@@ -60,7 +60,7 @@ public class PublishWindow extends Window{
 				//httpGet.setUrl("http://lyndonfawcett.me/publishRoom.php?username="+Start.username+"&name="+roomName.getText()+"&room="+json.toJson(temp));
 				//Post data to db 
 				Connection con = Jsoup.connect("http://lyndonfawcett.me/publishRoom.php")
-						  .data("username", Start.username)
+						  .data("username", ApplicationWrapper.username)
 						  .data("name", roomName.getText().replaceAll("!", "").replaceAll(";", "").replaceAll("#", "").replaceAll("@", "").replaceAll(",", "").replaceAll(" ", "_"))
 						  .data("room", json.toJson(temp, ArrayList.class));
 				try {

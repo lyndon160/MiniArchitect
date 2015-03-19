@@ -30,12 +30,13 @@ com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 		up: default-round,
 		down: default-round-down
 	},
-	24: { font: font_nixie_one_24pt_bold, up: btn_blue_glossyb },
+	24: { font: font_nixie_one_24pt_bold, up: woodcalk },
 	48: { font: font_nixie_one_48pt_bold, up: woodcalk },
 	bad: {
 		font: font_nixie_one_24pt_bold,
-		fontColor: { a: 1 },
-		up: btn_pink_glossy
+		fontColor: { a: 1, b: 1, g: 1, r: 1 },
+		up: btn_pink_glossy,
+		down: btn_blue_glossy
 	},
 	toggle: {
 		font: default-font,
@@ -62,10 +63,16 @@ com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 },
 com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
 	default: { imageUp: paint_brush, up: default-round, down: default-round-down },
+	settings: { imageUp: cog, imageDown: coggreen },
 	upvote: { imageUp: whiteup, imageChecked: upvote },
-	back: { imageUp: back, imageDown: back2 },
+	help: { imageUp: help, imageDown: "help pressed" },
 	delete: { imageUp: danger },
-	publish: { imageUp: publish, imageDown: pub2 }
+	grab: { imageUp: 1423191853_two_finger_rotate_gestureworks, imageChecked: grabgreen },
+	helpscreen: { imageUp: helpscreen },
+	restore: { imageUp: restore, imageDown: restoregreen },
+	publish: { imageUp: publish, imageDown: pub2 },
+	pencil: { imageUp: pencil, imageChecked: greenpencil },
+	back: { imageUp: back, imageDown: back2 }
 },
 com.badlogic.gdx.scenes.scene2d.ui.SplitPane$SplitPaneStyle: {
 	default-vertical: { handle: default-splitpane-vertical },

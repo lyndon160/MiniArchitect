@@ -7,7 +7,13 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
-
+/**
+ * 
+ * @author Lyndon
+ *
+ * Waits and listens for user input, draws a wall from touch down position to touch up position
+ *
+ */
 public class WallListener implements InputProcessor {
 	InputMultiplexer multiplexer;
 	boolean finished = false;
@@ -70,13 +76,7 @@ public class WallListener implements InputProcessor {
 			   
 			   double length = downIntersection.dst(upIntersection);
 			   
-					   //double length = Math.sqrt(Math.pow(xLength,2f)+Math.pow(zLength,2f));
-			   
-			//   Gdx.app.log("Wall up",up.origin.toString());
-			//   Gdx.app.log("down z location",downZ+"");
-			 //  Gdx.app.log("up z location",up.origin.z+"");		   
-			   //Remove listener at end
-			  // multiplexer.removeProcessor(this);
+
 			   Gdx.app.log("Length of wall",length+"");
 			   						//Might need the positive value of this
 			   rotation = Math.toDegrees(Math.atan2(xLength, zLength));//calculate angle to rotate wall

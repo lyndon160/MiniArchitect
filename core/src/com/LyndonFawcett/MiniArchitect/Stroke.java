@@ -7,6 +7,9 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
 
+
+
+import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.LyndonFawcett.MiniArchitect.UI.PublishWindow;
 import com.LyndonFawcett.MiniArchitect.screens.MenuScreen;
 import com.LyndonFawcett.MiniArchitect.utils.Notification;
@@ -15,6 +18,7 @@ import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
@@ -42,6 +46,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -57,7 +62,14 @@ import dollarN.NBestList;
 import dollarN.NDollarRecognizer;
 import dollarN.PointR;
 import dollarN.Utils;
-
+/**
+ * 
+ * Super class that handles gestures and 2D aspects of main program
+ * 
+ * 
+ * @author Lyndon
+ *
+ */
 public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 	private static final float BRUSHSIZE = 10;
@@ -223,15 +235,6 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
  				tempStr = tempStr.replaceFirst(repFirst[i], "");
  		
  			
- 			/*
- 			 * 
-					s.replaceAll(".g3db", "")+"\n\n").replaceAll("", "").replaceAll("_", "")
-					.replaceFirst("table", "").replaceFirst("chair", "").replaceFirst("tv", "").replaceFirst("sofa", "")
-					.replace("livingroom", "").replace("diningroom", "").replaceFirst("bathroom", "").replace("kitchen", "")
-					.replaceFirst("office", "").replace("foundation", "").replace("bedroom", "").replaceFirst("bed", "").replaceFirst("door", "")*/
- 			
-
- 			//tempStr = tempStr.replaceAll("[0-9]","");
  			
 			TextButton listItem = new TextButton(tempStr.trim().replace("QQQ", "£"), skinText,"list");
 			//Check that it is actually a model file that has been downloaded
@@ -312,6 +315,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		window.setWidth(Gdx.graphics.getWidth()/4);
 		window.setResizable(false);
 		window.setMovable(false);
+		//window.setModal(false);
 
 		Table titleTable = new Table(skin);
 
@@ -460,19 +464,23 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 
 		scroll.setWidget(homecontent); 
-		//scroll.getV
 		scroll.setScrollingDisabled(true, false);
-		//scroll.addListener(listener)
-		//scroll.setHeight(Gdx.graphics.getHeight());
-		//scroll.setWidth(Gdx.graphics.getDensity()*800);
+		//Fixes libgdx scroll bug.
+		scroll.addCaptureListener(new InputListener(){
+			public boolean scrolled (InputEvent event, float x, float y, int amount) {
+				event.stop();
+				return false;
+			}
+		});
+
 		Table wrapper = new Table(skin);
 		wrapper.add(titleTable).padRight(20).align(Align.left).row();
 		wrapper.add(scroll);
 		window.add(wrapper);
 		window.align(Align.top);
 		deleteBox= new ImageButton(skin,"delete");
-		//deleteBox.add(new Label("DELETE",skin,"24"));
-		//deleteBox.setColor(1, 0, 0, 1);
+
+		
 		deleteBox.setTouchable(Touchable.disabled);
 		deleteBox.setBounds(0,Gdx.graphics.getHeight()-deleteBox.getHeight(),
 				128,128);
@@ -507,6 +515,45 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 			}
 		});
 
+		
+		
+		ImageButton helpbtn=new ImageButton(skin,"help");
+
+		
+		helpbtn.setColor(1, 0, 0, 1);
+		helpbtn.setPosition(Gdx.graphics.getWidth()/6, Gdx.graphics.getHeight()/2f); //** Button location **//
+		helpbtn.setHeight(Gdx.graphics.getHeight()-helpbtn.getHeight()); //** Button Height **//
+		helpbtn.setWidth(Gdx.graphics.getWidth()/8); //** Button Width **//
+		helpbtn.addListener(new ClickListener(){
+			@Override
+			public void clicked(InputEvent event, float x, float y) {
+				//create new dialog with close button and help screen
+				final Window helpscreen = new Window("GESTURES",skin);
+				
+				ImageButton tmphelpscreen= new ImageButton(skin,"helpscreen");
+				tmphelpscreen.setSize(Gdx.graphics.getWidth()/1.2f, Gdx.graphics.getHeight()/1.2f);
+				ScrollPane scrollhelp = new ScrollPane(tmphelpscreen, skinNoBar,"transparent");
+				helpscreen.add(scrollhelp).maxSize(Gdx.graphics.getWidth()/1.2f, Gdx.graphics.getHeight()/1.2f).row();
+				TextButton tmpClose=new TextButton("CLOSE",skin,"bad");
+				tmpClose.addListener(new ClickListener(){
+					@Override
+					public void clicked(InputEvent event, float x, float y) {
+						helpscreen.setVisible(false);
+					}
+					});
+				helpscreen.add(tmpClose);
+				helpscreen.pack();
+				
+				
+				helpscreen.setPosition((Gdx.graphics.getWidth()/2)-helpscreen.getWidth()/2, (Gdx.graphics.getHeight()/2)-helpscreen.getHeight()/2);
+				
+				stage.addActor(helpscreen);
+			}
+		});
+
+		
+		stage.addActor(helpbtn);
+		
 		camBtn=new Button(skin);
 		camBtn.add(new Label("2D/3D",skinText, "24"));
 		camBtn.setColor(0, 0, 0, 1);
@@ -524,6 +571,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		});
 		
 		
+	
 		
 		resetCamBtn=new ImageButton(skin,"restore");
 		resetCamBtn.setPosition(Gdx.graphics.getWidth()/18, Gdx.graphics.getHeight()/2.8f); //** Button location **//

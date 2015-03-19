@@ -26,7 +26,13 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-
+/**
+ * 
+ * Oberserver class. All furniture is handled by this class in multiple objects
+ * 
+ * @author Lyndon
+ *
+ */
 public class ArenaItem extends ModelInstance implements InputProcessor, GestureListener{
 	boolean selected=false;
 	boolean delete=false;

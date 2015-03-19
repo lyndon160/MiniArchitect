@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import com.LyndonFawcett.MiniArchitect.Start;
+import com.LyndonFawcett.MiniArchitect.ApplicationWrapper;
 import com.LyndonFawcett.MiniArchitect.screens.MenuScreen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
@@ -58,8 +58,8 @@ public class ChangeUsernameWindow extends Window{
 					if(doc.body().text().contains("success!")){
 						//correct account, close dialogue and change username throughout
 						prefs.putString("username", name.getText());
-						Start.username=name.getText();
-						MenuScreen.userLabel.setText(Start.username);
+						ApplicationWrapper.username=name.getText();
+						MenuScreen.userLabel.setText(ApplicationWrapper.username);
 						//If account is legitimate then add username to app
 						Gdx.app.getPreferences("login").putString("username", name.getText());
 						handle.setVisible(false);

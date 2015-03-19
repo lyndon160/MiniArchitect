@@ -8,7 +8,14 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Array;
-
+/**
+ * 
+ * Conversion class to save space when uploading models
+ * Coverts ArenaItem class
+ * 
+ * @author Lyndon
+ *
+ */
 public class MinimalItem {
 	Matrix4 transform;
 	public String modelName;

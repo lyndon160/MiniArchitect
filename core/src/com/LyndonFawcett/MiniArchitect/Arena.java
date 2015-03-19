@@ -8,6 +8,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import com.LyndonFawcett.MiniArchitect.utils.ScreenshotFactory;
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
@@ -36,6 +37,8 @@ import com.badlogic.gdx.utils.JsonValue;
  * 
  * @author Lyndon
  *
+ *
+ * Contains 3D models and debug wires
  */
 public class Arena extends Stroke{
 	public static CameraInputController camController;
@@ -55,6 +58,7 @@ public class Arena extends Stroke{
 	static public Renderable renderable;
 	private RenderContext renderContext;
 	private DefaultShader shader;
+	
 	static public HashMap<String, ArrayList<Nodelet>> nodes;
 	@Override
 	public void show() { 
@@ -219,7 +223,9 @@ public class Arena extends Stroke{
 
 	}
 
-
+	public void captureScreen(){
+		ScreenshotFactory.saveScreenshot();
+	}
 
 
 	@Override

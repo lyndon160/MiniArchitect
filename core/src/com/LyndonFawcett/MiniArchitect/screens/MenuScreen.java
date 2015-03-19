@@ -14,7 +14,10 @@ import aurelienribon.tweenengine.Tween;
 import aurelienribon.tweenengine.TweenCallback;
 import aurelienribon.tweenengine.TweenManager;
 
-import com.LyndonFawcett.MiniArchitect.Start;
+import com.LyndonFawcett.MiniArchitect.ApplicationWrapper;
+import com.LyndonFawcett.MiniArchitect.Arena;
+import com.LyndonFawcett.MiniArchitect.ArenaItem;
+import com.LyndonFawcett.MiniArchitect.Stroke;
 import com.LyndonFawcett.MiniArchitect.UI.CardWindow;
 import com.LyndonFawcett.MiniArchitect.UI.ChangeUsernameWindow;
 import com.LyndonFawcett.MiniArchitect.tween.ActorAccessor;
@@ -22,6 +25,7 @@ import com.LyndonFawcett.MiniArchitect.utils.Updater;
 import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
@@ -36,10 +40,18 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
 
 
 
-
+/**
+ * 
+ * 
+ * @author Lyndon
+ *
+ * Starting screen of application. Holds login, news, and navigation to other parts of the application
+ *
+ */
 public class MenuScreen implements Screen{
 
 	private Stage stage;
@@ -112,7 +124,7 @@ public class MenuScreen implements Screen{
 		buttonView.pad(15);
 
 		//Username label
-		userLabel = new Label(Start.username,skin,"24");
+		userLabel = new Label(ApplicationWrapper.username,skin,"24");
 		userLabel.setPosition(10, Gdx.graphics.getHeight()-userLabel.getHeight());
 		stage.addActor(userLabel);
 		
@@ -148,7 +160,9 @@ public class MenuScreen implements Screen{
 
 									@Override
 									public void onEvent(int type, BaseTween<?> source) {
-										((Game) Gdx.app.getApplicationListener()).setScreen(new CreateOptionsScreen());
+										Stroke.multiplexer = new InputMultiplexer();
+										Arena.instances  = new Array<ArenaItem>();
+										((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 									}
 								}))
 						.end().start(tweenManager);

@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element;
 
 import com.LyndonFawcett.MiniArchitect.Arena;
 import com.LyndonFawcett.MiniArchitect.ArenaItem;
-import com.LyndonFawcett.MiniArchitect.Start;
+import com.LyndonFawcett.MiniArchitect.ApplicationWrapper;
 import com.LyndonFawcett.MiniArchitect.Stroke;
 import com.LyndonFawcett.MiniArchitect.utils.MinimalItem;
 import com.badlogic.gdx.Files.FileType;
@@ -25,18 +25,26 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
-
+/**
+ * 
+ * Screen that shows different online rooms. Connects to database to gather rooms and filters them by top, new, owners
+ * 
+ * @author Lyndon
+ *
+ */
 public class ViewRoomsScreen implements Screen{
 	private Stage stage;
 	private Skin skin;
@@ -107,7 +115,7 @@ public class ViewRoomsScreen implements Screen{
 
 				// need http protocol
 				try {
-					doc = Jsoup.connect("http://lyndonfawcett.me/getMyRooms.php?id="+Start.username).get();
+					doc = Jsoup.connect("http://lyndonfawcett.me/getMyRooms.php?id="+ApplicationWrapper.username).get();
 
 					System.out.println("Mine selected");
 
@@ -119,6 +127,13 @@ public class ViewRoomsScreen implements Screen{
 						return;
 					JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
 
+					if(Stroke.multiplexer == null)
+						Stroke.multiplexer = new InputMultiplexer();
+					if(Arena.instances == null){
+						Arena.instances  = new Array<ArenaItem>();
+						Arena.wireFrames =new ArrayList<ModelInstance>();
+					}
+					
 					Iterator<JsonValue> i = root.child().iterator();
 					rightPaneContent.clear();
 					while(i.hasNext()){
@@ -283,6 +298,14 @@ public class ViewRoomsScreen implements Screen{
 						return;
 					JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
 					System.out.println();
+					
+					if(Stroke.multiplexer == null)
+						Stroke.multiplexer = new InputMultiplexer();
+					if(Arena.instances == null){
+						Arena.instances  = new Array<ArenaItem>();
+						Arena.wireFrames =new ArrayList<ModelInstance>();
+					}
+					
 					Iterator<JsonValue> i = root.child().iterator();
 					rightPaneContent.clear();
 					while(i.hasNext()){
@@ -305,11 +328,14 @@ public class ViewRoomsScreen implements Screen{
 						for(MinimalItem mini : minItems)
 							if(!mini.modelName.contains("wall"))
 								arenaItems.add(mini.convertToArenaItem(Stroke.multiplexer));
+						Window windowWrapper = new Window("",skin,"chalk");
+						Table container = new Table(skin);
+						Image image = new Image(new Texture(Gdx.files.internal("template.PNG")));
+						Label l = new Label(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
+						container.add(l).row();
+						container.add(image);
 
-
-
-						TextButton l = new TextButton(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
-						l.addListener(new ClickListener() {
+						container.addListener(new ClickListener() {
 							@Override
 							public void clicked(InputEvent event, float x, float y) {
 								Arena.instances=arenaItems;
@@ -317,7 +343,8 @@ public class ViewRoomsScreen implements Screen{
 								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 							}
 						});
-						rightPaneContent.add(l).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
+						windowWrapper.add(container);
+						rightPaneContent.add(windowWrapper).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
 						
 						//Vote button
 						final ImageButton like = new ImageButton(skin,"upvote");

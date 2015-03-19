@@ -33,7 +33,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
-
+/**
+ * 
+ * Shows options of different starting rooms before creation
+ * 
+ * @author Lyndon
+ *
+ */
 public class CreateOptionsScreen implements Screen,InputProcessor{
 
 	private Stage stage;
