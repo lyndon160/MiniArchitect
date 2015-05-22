@@ -41,7 +41,7 @@ public class ScreenshotFactory {
     /*
      * Get current image of screen and return into a pixel map
      */
-    private static Pixmap getScreenshot(int x, int y, int w, int h, boolean yDown){
+    public static Pixmap getScreenshot(int x, int y, int w, int h, boolean yDown){
         final Pixmap pixmap = ScreenUtils.getFrameBufferPixmap(x, y, w, h);
     	Camera pCam=Arena.pCam;//camera to take screenshot from
         if (yDown) {

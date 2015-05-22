@@ -8,6 +8,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import com.LyndonFawcett.MiniArchitect.utils.Notification;
 import com.LyndonFawcett.MiniArchitect.utils.ScreenshotFactory;
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
@@ -26,6 +27,7 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.RenderContext;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
@@ -110,6 +112,7 @@ public class Arena extends Stroke{
 
 		//Get node point json file 
 		final Document doc;
+		if(nodes==null){
 		nodes = new HashMap<String, ArrayList<Nodelet>>();
 		// need http protocol
 		try {
@@ -144,7 +147,7 @@ public class Arena extends Stroke{
 			}
 		}catch(Exception e){System.out.println(e);};
 
-
+		}
 		for(ArenaItem i:instances)
 			System.out.println("Arena instances :"+i.modelName);
 
@@ -181,6 +184,19 @@ public class Arena extends Stroke{
 
 	@Override
 	public void addItem(String item){
+		
+		if(instances.size>10){
+			new Notification(stage, skin, new Label("Remove some items before adding more", skin, "24"));
+			if(item.equals("wall")){
+				//start listening for wall placement
+				multiplexer.addProcessor(new WallListener(multiplexer));
+
+
+			}
+			return;
+		}
+		
+		
 		System.out.println("ADDING ITEM");
 		if(item.equals("wall")){
 			//start listening for wall placement
@@ -220,7 +236,11 @@ public class Arena extends Stroke{
 	}
 	@Override
 	public void arenaDispose(){
-
+		model.dispose();
+		
+		Arena.debug.clear();
+		Arena.instances.clear();
+		Arena.wireFrames.clear();		
 	}
 
 	public void captureScreen(){

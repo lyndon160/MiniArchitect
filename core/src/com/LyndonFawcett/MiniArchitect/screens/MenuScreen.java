@@ -63,8 +63,8 @@ public class MenuScreen implements Screen{
 	private SpriteBatch batch;
 	private Table tablecol;
 	private Table tabletitle;
-	private Timer autoModeTimer;
 	static public Label userLabel; 
+	private CardWindow news;
 	@Override
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -139,13 +139,10 @@ public class MenuScreen implements Screen{
 			}});
 			
 		
-
-
-		FileHandle file = Gdx.files.local("downloaded/news/news.txt");
 	
 		
 		//create news window
-		CardWindow news = new CardWindow(skin);
+		news = new CardWindow(skin);
 
 
 		TextButton buttonCreate = new TextButton("CREATE NEW ROOM", skin, "32");
@@ -229,16 +226,16 @@ public class MenuScreen implements Screen{
 		
 		
 		
-		//Setup async for loading news to news window
-		autoModeTimer = new Timer();
-		//To cancel any task:
-		autoModeTimer.purge();
-		//To Start a Task:
-		autoModeTimer.schedule(new TimerTask() {
-		            @Override public void run() {
-
-		            }}, 0);
-		
+//		//Setup async for loading news to news window
+//		autoModeTimer = new Timer();
+//		//To cancel any task:
+//		autoModeTimer.purge();
+//		//To Start a Task:
+//		autoModeTimer.schedule(new TimerTask() {
+//		            @Override public void run() {
+//
+//		            }}, 0);
+//		
 
 		
 	}
@@ -262,5 +259,8 @@ public class MenuScreen implements Screen{
 	public void dispose() {
 		stage.dispose();
 		skin.dispose();
+		background.dispose();
+		if(news!=null)
+			news.dispose();
 	}
 }

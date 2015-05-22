@@ -8,10 +8,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import com.LyndonFawcett.MiniArchitect.ApplicationWrapper;
 import com.LyndonFawcett.MiniArchitect.Arena;
 import com.LyndonFawcett.MiniArchitect.ArenaItem;
-import com.LyndonFawcett.MiniArchitect.ApplicationWrapper;
 import com.LyndonFawcett.MiniArchitect.Stroke;
+import com.LyndonFawcett.MiniArchitect.utils.ImageSerializer;
 import com.LyndonFawcett.MiniArchitect.utils.MinimalItem;
 import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.Game;
@@ -20,7 +21,10 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -35,6 +39,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
@@ -51,7 +56,14 @@ public class ViewRoomsScreen implements Screen{
 	private Table table;
 	private Texture background;
 	private SpriteBatch batch;
-
+	
+	ArrayList<MinimalItem> minItems;
+	final Array<ArenaItem> arenaItems = new Array<ArenaItem>();
+	final InputMultiplexer arenaMulti = new InputMultiplexer();
+	
+	ArrayList<Disposable> assets;
+	Document doc;
+	Json j;
 	@Override
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -64,7 +76,7 @@ public class ViewRoomsScreen implements Screen{
 		stage.draw();
 
 
-		if(Gdx.input.isKeyPressed(Keys.BACK) || Gdx.input.isKeyPressed(Keys.BACKSPACE)){
+		if(Gdx.input.isKeyPressed(Keys.BACK) || Gdx.input.isKeyPressed(Keys.ESCAPE)){
 			((Game) Gdx.app.getApplicationListener()).setScreen(new MenuScreen());
 		}
 	}
@@ -82,19 +94,21 @@ public class ViewRoomsScreen implements Screen{
 		stage = new Stage();
 		batch = new SpriteBatch(); 
 		Gdx.input.setInputProcessor(stage);
-
+		assets = new ArrayList<Disposable>();
 		skin = new Skin(Gdx.files.internal("ChalkUi/uiskin.json"));
 
-
+		j = new Json();
 		background = new Texture(Gdx.files.getFileHandle("blueprint.jpg", FileType.Internal), false);
-
+		assets.add(background);
+		
+		
 		table = new Table(skin);
 		//Table needs one column left one column right
 
 		Table filterWindow = new Table(skin);
-		TextButton myRoomsBtn = new TextButton("MY ROOMS",skin,"24");
-		TextButton topRoomsBtn = new TextButton("TOP ROOMS",skin,"24");
-		TextButton newRoomsBtn = new TextButton("DISCOVER",skin,"24");
+		final TextButton myRoomsBtn = new TextButton("MY ROOMS",skin,"toggle24");
+		final TextButton topRoomsBtn = new TextButton("TOP ROOMS",skin,"toggle24");
+		final TextButton newRoomsBtn = new TextButton("DISCOVER",skin,"toggle24");
 
 
 
@@ -102,7 +116,7 @@ public class ViewRoomsScreen implements Screen{
 
 		final Table rightPaneContent = new Table(skin);
 
-		rightPaneContent.add(new Label("filler",skin,"24"));
+		rightPaneContent.add(new Label("Nothing here! Create some rooms",skin,"24"));
 		rightPaneContent.pack();	
 		rightPane.setWidget(rightPaneContent);
 
@@ -111,28 +125,22 @@ public class ViewRoomsScreen implements Screen{
 		myRoomsBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				final Document doc;
 
 				// need http protocol
 				try {
 					doc = Jsoup.connect("http://lyndonfawcett.me/getMyRooms.php?id="+ApplicationWrapper.username).get();
 
-					System.out.println("Mine selected");
-
+					topRoomsBtn.setChecked(false);
+					newRoomsBtn.setChecked(false);
 					// get all links
 					Element jbody = doc.body();
-					Json j = new Json();
+
 					//j.fromJson(ArrayList.class, jbody.text().replace(",{}", "");
 					if(jbody.text().contentEquals("No room"))
 						return;
-					JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
-
-					if(Stroke.multiplexer == null)
-						Stroke.multiplexer = new InputMultiplexer();
-					if(Arena.instances == null){
-						Arena.instances  = new Array<ArenaItem>();
-						Arena.wireFrames =new ArrayList<ModelInstance>();
-					}
+					String parse =jbody.text().replace(",{}", "");
+					//System.out.println(parse);
+					JsonValue root = new JsonReader().parse(parse);
 					
 					Iterator<JsonValue> i = root.child().iterator();
 					rightPaneContent.clear();
@@ -146,29 +154,55 @@ public class ViewRoomsScreen implements Screen{
 
 						String roomJson = obj.child().next().next().next().toString();
 						//Generate arena items from minimal items
+						String imageJson = obj.child().next().next().next().next().toString();
+						
+						//convert image to sprite
+						ImageSerializer imageBytes = j.fromJson(ImageSerializer.class, imageJson);
+						
+						Pixmap p= new Pixmap(80,60,Format.RGBA8888);
 
-						ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
-						final Array<ArenaItem> arenaItems = new Array<ArenaItem>();
-						//if(Stroke.multiplexer == null)
-						Stroke.multiplexer = new InputMultiplexer();
-						//if(Arena.instances == null)
-						Arena.instances  = new Array<ArenaItem>();
-						for(MinimalItem mini : minItems)
-							if(!mini.modelName.contains("wall"))
-								arenaItems.add(mini.convertToArenaItem(Stroke.multiplexer));
+						p.getPixels().put(imageBytes.bytes, 0, imageBytes.bytes.length);
+						p.getPixels().rewind();
+						
+						final ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
+						if(Stroke.multiplexer == null)
+							Stroke.multiplexer = new InputMultiplexer();
+						if(Arena.instances == null){
+							Arena.instances  = new Array<ArenaItem>();
+							Arena.wireFrames =new ArrayList<ModelInstance>();
+						}
 
+						
+				
+						Window windowWrapper = new Window("",skin,"chalk");
+						Table container = new Table(skin);
+						Texture t = new Texture(p);
+						Image image = new Image(t);
+						
+						assets.add(t);
+						
+						p.dispose();
+						image.scaleBy(3);
+						image.debug();
+						Label l = new Label(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
+						container.add(l).row().row().row().row();
+						container.add(image).padRight(300).padTop(200);
 
-
-						TextButton l = new TextButton(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
-						l.addListener(new ClickListener() {
+						container.addListener(new ClickListener() {
 							@Override
 							public void clicked(InputEvent event, float x, float y) {
+								for(MinimalItem mini : minItems)
+									if(!mini.modelName.contains("wall"))
+										arenaItems.add(mini.convertToArenaItem(arenaMulti));
+								
 								Arena.instances=arenaItems;
-								System.out.println(Arena.instances.size);
+								Arena.multiplexer=arenaMulti;
+							//	System.out.println(Arena.instances.size);
 								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 							}
 						});
-						rightPaneContent.add(l).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
+						windowWrapper.add(container);
+						rightPaneContent.add(windowWrapper).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
 						
 						//Vote button
 						final ImageButton like = new ImageButton(skin,"upvote");
@@ -198,24 +232,27 @@ public class ViewRoomsScreen implements Screen{
 		topRoomsBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				final Document doc;
-
+				myRoomsBtn.setChecked(false);
+				newRoomsBtn.setChecked(false);
 				// need http protocol
 				try {
 					doc = Jsoup.connect("http://lyndonfawcett.me/getTopRooms.php").get();
 
-					System.out.println("Top selected");
+				//	System.out.println("Top selected");
 
 					// get all links
 					Element jbody = doc.body();
-					Json j = new Json();
-					//j.fromJson(ArrayList.class, jbody.text().replace(",{}", "");
+
+
 					if(jbody.text().contentEquals("No room"))
 						return;
-					JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
-					System.out.println();
+					
+					String parse =jbody.text().replace(",{}", "");
+					//System.out.println(parse);
+					JsonValue root = new JsonReader().parse(parse);
 					Iterator<JsonValue> i = root.child().iterator();
 					rightPaneContent.clear();
+					//Iterate over rooms
 					while(i.hasNext()){
 						JsonValue obj = i.next();
 						final int id = obj.child().asInt();
@@ -225,35 +262,58 @@ public class ViewRoomsScreen implements Screen{
 						String roomName = obj.child().next().next().asString();
 
 						String roomJson = obj.child().next().next().next().toString();
-						//Generate arena items from minimal items
+						
+						String imageJson = obj.child().next().next().next().next().toString();
+						
+						//convert image to sprite
+						ImageSerializer imageBytes = j.fromJson(ImageSerializer.class, imageJson);
+						
+						Pixmap p= new Pixmap(80,60,Format.RGBA8888);
 
-						ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
-						final Array<ArenaItem> arenaItems = new Array<ArenaItem>();
-						final InputMultiplexer arenaMulti = new InputMultiplexer();
+						p.getPixels().put(imageBytes.bytes, 0, imageBytes.bytes.length);
+						p.getPixels().rewind();
+					//	Sprite s =new Sprite(new Texture(p));
+					//	s.flip(false, true);
+						
+						//Generate arena items from minimal items						
+						final ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
+
 						if(Stroke.multiplexer == null)
 							Stroke.multiplexer = new InputMultiplexer();
 						if(Arena.instances == null){
 							Arena.instances  = new Array<ArenaItem>();
 							Arena.wireFrames =new ArrayList<ModelInstance>();
 						}
-						for(MinimalItem mini : minItems)
-							if(!mini.modelName.contains("wall"))
-								arenaItems.add(mini.convertToArenaItem(arenaMulti));
 
+						Window windowWrapper = new Window("",skin,"chalk");
+						Table container = new Table(skin);
+						Texture t = new Texture(p);
+						Image image = new Image(t);
+						assets.add(t);
+						p.dispose();
+						image.scaleBy(3);
+						image.debug();
+						Label l = new Label(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
+						container.add(l).row().row().row().row();
+						container.add(image).padRight(300).padTop(200);
 
-
-						TextButton l = new TextButton(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
-						l.addListener(new ClickListener() {
+						container.addListener(new ClickListener() {
 							@Override
 							public void clicked(InputEvent event, float x, float y) {
+								
+								for(MinimalItem mini : minItems)
+									if(!mini.modelName.contains("wall"))
+										arenaItems.add(mini.convertToArenaItem(arenaMulti));
+								minItems.clear();
 								Arena.instances=arenaItems;
 								Arena.multiplexer=arenaMulti;
-								System.out.println(Arena.instances.size);
+							//	System.out.println(Arena.instances.size);
 								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 							}
 						});
-						rightPaneContent.add(l).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
-						
+						windowWrapper.add(container);
+						rightPaneContent.add(windowWrapper).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
+					
 						//Vote button
 						final ImageButton like = new ImageButton(skin,"upvote");
 						like.addListener(new ClickListener() {
@@ -278,26 +338,27 @@ public class ViewRoomsScreen implements Screen{
 				}
 			}
 		});
-		//get content by date and layout
+		//Discover rooms button
 		newRoomsBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				final Document doc;
 
+				topRoomsBtn.setChecked(false);
+				myRoomsBtn.setChecked(false);
 				// need http protocol
 				try {
 					doc = Jsoup.connect("http://lyndonfawcett.me/getTopRooms.php").get();
 
-					System.out.println("Top selected");
+					//System.out.println("Top selected");
 
 					// get all links
 					Element jbody = doc.body();
-					Json j = new Json();
+
 					//j.fromJson(ArrayList.class, jbody.text().replace(",{}", "");
 					if(jbody.text().contentEquals("No room"))
 						return;
 					JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
-					System.out.println();
+					//System.out.println();
 					
 					if(Stroke.multiplexer == null)
 						Stroke.multiplexer = new InputMultiplexer();
@@ -318,28 +379,62 @@ public class ViewRoomsScreen implements Screen{
 
 						String roomJson = obj.child().next().next().next().toString();
 						//Generate arena items from minimal items
+						String imageJson = obj.child().next().next().next().next().toString();
+						
+						//convert image to sprite
+						ImageSerializer imageBytes = j.fromJson(ImageSerializer.class, imageJson);
+						
+						Pixmap p= new Pixmap(80,60,Format.RGBA8888);
 
-						ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
-						final Array<ArenaItem> arenaItems = new Array<ArenaItem>();
+						p.getPixels().put(imageBytes.bytes, 0, imageBytes.bytes.length);
+						p.getPixels().rewind();
+						
+						
+						final ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
 						if(Stroke.multiplexer == null)
 							Stroke.multiplexer = new InputMultiplexer();
-						if(Arena.instances == null)
+						if(Arena.instances == null){
 							Arena.instances  = new Array<ArenaItem>();
-						for(MinimalItem mini : minItems)
-							if(!mini.modelName.contains("wall"))
-								arenaItems.add(mini.convertToArenaItem(Stroke.multiplexer));
+							Arena.wireFrames =new ArrayList<ModelInstance>();
+						}
+						String price ="£0";
+						
+						
+						
+						/* Clear other arenaItems
+						 * 
+						 * 
+						 */
+						
+
+					//	System.out.println(price);
+
+
+				
+
+
 						Window windowWrapper = new Window("",skin,"chalk");
 						Table container = new Table(skin);
-						Image image = new Image(new Texture(Gdx.files.internal("template.PNG")));
+						Texture t = new Texture(p);
+						Image image = new Image(t);
+						assets.add(t);
+						p.dispose();
+						image.scaleBy(3);
+						image.debug();
 						Label l = new Label(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
-						container.add(l).row();
-						container.add(image);
+						container.add(l).row().row().row().row();
+						container.add(image).padRight(300).padTop(200);
 
 						container.addListener(new ClickListener() {
 							@Override
 							public void clicked(InputEvent event, float x, float y) {
+								for(MinimalItem mini : minItems)
+									if(!mini.modelName.contains("wall"))
+										arenaItems.add(mini.convertToArenaItem(arenaMulti));
+								minItems.clear();
 								Arena.instances=arenaItems;
-								System.out.println(Arena.instances.size);
+								Arena.multiplexer=arenaMulti;
+							//	System.out.println(Arena.instances.size);
 								((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
 							}
 						});
@@ -371,6 +466,8 @@ public class ViewRoomsScreen implements Screen{
 			}
 		});
 
+		
+		
 		filterWindow.add(myRoomsBtn).height(Gdx.graphics.getHeight() / 5f).width(Gdx.graphics.getWidth() / 5f).pad(10, 0, 10, 0).row();
 		filterWindow.add(topRoomsBtn).height(Gdx.graphics.getHeight() / 5f).width(Gdx.graphics.getWidth() / 5f).pad(10, 0, 10, 0).row();
 		filterWindow.add(newRoomsBtn).height(Gdx.graphics.getHeight() / 5f).width(Gdx.graphics.getWidth() / 5f).pad(10, 0, 10, 0);
@@ -385,7 +482,127 @@ public class ViewRoomsScreen implements Screen{
 		//table.debug();
 		table.setFillParent(true);
 		stage.addActor(table);
+
+		
+		
+		//insert loading dialog screen here
+		
+		
+		
+		
+		//load my rooms by default
+		
+		final Document doc;
+
+		// need http protocol
+		try {
+			myRoomsBtn.setChecked(true);
+			doc = Jsoup.connect("http://lyndonfawcett.me/getMyRooms.php?id="+ApplicationWrapper.username).get();
+
+			//System.out.println("Mine selected");
+			topRoomsBtn.setChecked(false);
+			newRoomsBtn.setChecked(false);
+			// get all links
+			Element jbody = doc.body();
+
+			//j.fromJson(ArrayList.class, jbody.text().replace(",{}", "");
+			if(jbody.text().contentEquals("No room"))
+				return;
+			String parse =jbody.text().replace(",{}", "");
+			//System.out.println(parse);
+			JsonValue root = new JsonReader().parse(parse);
+			
+			Iterator<JsonValue> i = root.child().iterator();
+			rightPaneContent.clear();
+			while(i.hasNext()){
+				JsonValue obj = i.next();
+				final int id = obj.child().asInt();
+
+				String owner = obj.child().next().asString();
+
+				String roomName = obj.child().next().next().asString();
+
+				String roomJson = obj.child().next().next().next().toString();
+				//Generate arena items from minimal items
+				String imageJson = obj.child().next().next().next().next().toString();
+				
+				//convert image to sprite
+				ImageSerializer imageBytes = j.fromJson(ImageSerializer.class, imageJson);
+				
+				Pixmap p= new Pixmap(80,60,Format.RGBA8888);
+
+				p.getPixels().put(imageBytes.bytes, 0, imageBytes.bytes.length);
+				p.getPixels().rewind();
+				
+				final ArrayList<MinimalItem> minItems =j.fromJson(ArrayList.class, roomJson);
+
+				if(Stroke.multiplexer == null)
+					Stroke.multiplexer = new InputMultiplexer();
+				if(Arena.instances == null){
+					Arena.instances  = new Array<ArenaItem>();
+					Arena.wireFrames =new ArrayList<ModelInstance>();
+				}
+
+		
+				Window windowWrapper = new Window("",skin,"chalk");
+				Table container = new Table(skin);
+				Texture t = new Texture(p);
+				Image image = new Image(t);
+				assets.add(t);
+				p.dispose();
+				if(Gdx.graphics.getWidth()<1700)
+					image.scaleBy(2);
+				else
+					image.scaleBy(3);
+				image.debug();
+				Label l = new Label(owner + ": " +roomName.replaceAll("_", " "),skin,"32");
+				if(Gdx.graphics.getWidth()<1700)
+					container.add(l).padBottom(Gdx.graphics.getHeight()/17).row();
+				else
+					container.add(l).padBottom(Gdx.graphics.getHeight()/7).row();
+				container.add(image).padRight(Gdx.graphics.getWidth()/7).padTop((Gdx.graphics.getHeight()/10));
+
+				container.addListener(new ClickListener() {
+					@Override
+					public void clicked(InputEvent event, float x, float y) {
+
+						for(MinimalItem mini : minItems)
+							if(!mini.modelName.contains("wall"))
+								arenaItems.add(mini.convertToArenaItem(arenaMulti));
+						minItems.clear();				
+						Arena.instances=arenaItems;
+						Arena.multiplexer=arenaMulti;
+					//	System.out.println(Arena.instances.size);
+						((Game) Gdx.app.getApplicationListener()).setScreen(new Arena());
+					}
+				});
+				windowWrapper.add(container);
+				rightPaneContent.add(windowWrapper).padBottom(20).height(Gdx.graphics.getWidth()/5).width(Gdx.graphics.getWidth()/2);
+				
+				//Vote button
+				final ImageButton like = new ImageButton(skin,"upvote");
+				like.addListener(new ClickListener() {
+					Document doc;
+					@Override
+					public void clicked(InputEvent event, float x, float y) {
+						//upvote room
+						try {
+							doc = Jsoup.connect("http://lyndonfawcett.me/voteOnRoom.php?id="+ id).get();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						like.setDisabled(true);
+					}
+				});
+				rightPaneContent.add(like).height(Gdx.graphics.getHeight()/10).width(Gdx.graphics.getWidth()/10).row();
+				
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
+
 
 	@Override
 	public void hide() {
@@ -408,6 +625,12 @@ public class ViewRoomsScreen implements Screen{
 	public void dispose() {
 		stage.dispose();
 		skin.dispose();
+		background.dispose();
+		if(minItems !=null)
+			minItems.clear();
+		batch.dispose();
+		for(Disposable d : assets)
+			d.dispose();
 	}
 
 }

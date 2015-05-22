@@ -2,6 +2,11 @@ package com.LyndonFawcett.MiniArchitect;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import com.LyndonFawcett.MiniArchitect.utils.Notification;
 import com.badlogic.gdx.Gdx;
@@ -26,6 +31,9 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 /**
  * 
  * Oberserver class. All furniture is handled by this class in multiple objects
@@ -70,8 +78,44 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		createWire();
 		selected= true;
 		skin =new Skin(Gdx.files.internal("ChalkUi/uiskin.json"));
-		if(Arena.nodes == null)
+		if(Arena.nodes == null){
 			Arena.nodes=new HashMap<String, ArrayList<Nodelet>>();
+			final Document doc;
+			
+			try {
+				System.out.println("Connecting to site");
+				doc = Jsoup.connect("http://lyndonfawcett.me/nodes.json").ignoreContentType(true).get();
+
+
+				// get all links
+				Element jbody = doc.body();
+				Json j = new Json();
+				
+				JsonValue root = new JsonReader().parse(jbody.text().replace(",{}", ""));
+				Iterator<JsonValue> i = root.child().iterator();//item
+				while(i.hasNext()){
+					JsonValue obj = i.next();
+					String item = obj.child().asString();
+					String connector = obj.child().next().next().asString();
+					System.out.println("DOWNLOAD NODES");
+					System.out.println("Model name :"+item);
+					Arena.nodes.put(item, new ArrayList<Nodelet>());
+					for(JsonValue jVal:obj.child().next()){
+						float x =jVal.child().asFloat();//x
+						float z =jVal.child().next().asFloat();//z
+						float roty =jVal.child().next().next().asFloat();
+						float rotw =jVal.child().next().next().next().asFloat();
+						System.out.println(x + "   " + z);
+						Arena.nodes.get(item).add(new Nodelet(x,z,roty,rotw,connector));
+					}
+					
+
+
+				}
+			}catch(Exception e){System.out.println(e);};
+			
+			
+		}
 		if(Arena.nodes.containsKey(modelName)){
 			//System.out.println("Nodes");
 			for(Nodelet n:Arena.nodes.get(modelName)){
@@ -122,6 +166,12 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 		selected= true;
 
 
+
+	}
+
+	
+	public void dispose() {
+		skin.dispose();
 
 	}
 
@@ -327,27 +377,29 @@ public class ArenaItem extends ModelInstance implements InputProcessor, GestureL
 				//reduce total price
 				Stroke.runningCost.setText("£"+(Integer.parseInt(Stroke.runningCost.getText().toString().replace("£",""))-value));
 				
-				//delete group members
-				for(ArenaItem i :group){
-					Stroke.runningCost.setText("£"+(Integer.parseInt(Stroke.runningCost.getText().toString().replace("£",""))-i.value));
-					
-					Arena.instances.removeValue(i, false);
-					Arena.wireFrames.remove(i.wire);
-				}
-
+				Arena.instances.removeValue(this, false);
+				Arena.wireFrames.remove(wire);
 				for(Nodelet n : nodes)
 					if(Arena.debug.contains(n.wire))
 						Arena.debug.remove(n.wire);
+				//delete group members
+				for(ArenaItem i :group){
+					Stroke.runningCost.setText("£"+(Integer.parseInt(Stroke.runningCost.getText().toString().replace("£",""))-i.value));
+					Arena.instances.removeValue(i, false);
+					Arena.wireFrames.remove(i.wire);
+					
+					
+					for(Nodelet n : i.nodes)
+						if(Arena.debug.contains(n.wire))
+							Arena.debug.remove(n.wire);
+					
+				}
+
+
 				nodes.clear();
 
-				Arena.instances.removeValue(this, false);
-				Arena.wireFrames.remove(wire);
+
 				new Notification(Stroke.stage,skin,new Label("ITEM DELETED",skin,"24"));
-				try{
-					//	if(Stroke.multiplexer.getProcessors().contains(this, false))
-					//		Stroke.multiplexer.getProcessors().removeValue(this, false);
-				}
-				catch(Exception e){System.out.print(e);}
 			}
 
 			wire.transform.set(this.transform.getTranslation(new Vector3()),this.transform.getRotation(new Quaternion()));

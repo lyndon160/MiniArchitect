@@ -9,6 +9,7 @@ import java.util.Vector;
 
 
 
+
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.LyndonFawcett.MiniArchitect.UI.PublishWindow;
 import com.LyndonFawcett.MiniArchitect.screens.MenuScreen;
@@ -74,10 +75,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 	private static final float BRUSHSIZE = 10;
 	SpriteBatch batch;
-	static ArrayList<Sprite> sketch;
-
-
-
+	public static ArrayList<Sprite> sketch;
 	public static ArrayList<Item> furnishings;
 
 	public static InputMultiplexer multiplexer;
@@ -110,7 +108,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 	Texture texture1;
 	int	camPointer;
 	Window window;
-	static Label runningCost;
+	public static Label runningCost;
 	
 	boolean debug = false;
 	private Button resetCamBtn;
@@ -521,9 +519,9 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 		
 		helpbtn.setColor(1, 0, 0, 1);
-		helpbtn.setPosition(Gdx.graphics.getWidth()/6, Gdx.graphics.getHeight()/2f); //** Button location **//
-		helpbtn.setHeight(Gdx.graphics.getHeight()-helpbtn.getHeight()); //** Button Height **//
-		helpbtn.setWidth(Gdx.graphics.getWidth()/8); //** Button Width **//
+		helpbtn.setPosition(Gdx.graphics.getWidth()/6, Gdx.graphics.getHeight()/1.2f); //** Button location **//
+	//	helpbtn.setHeight(Gdx.graphics.getHeight()-helpbtn.getHeight()); //** Button Height **//
+	//	helpbtn.setWidth(Gdx.graphics.getWidth()/8); //** Button Width **//
 		helpbtn.addListener(new ClickListener(){
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -658,9 +656,22 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 		
 		
 		//Create total cost lable
-		runningCost = new Label("0",skin,"24");
+		if(runningCost==null)
+			runningCost = new Label("£0",skin,"24");
+		else
+			runningCost.setText("£0");
 		runningCost.setPosition((float) (Gdx.graphics.getWidth()/1.5), Gdx.graphics.getHeight()-runningCost.getHeight()-50);
 		stage.addActor(runningCost);
+		if(Arena.instances!=null)
+			for(ArenaItem item :Arena.instances){
+
+			if(item.modelName.contains("QQQ"))
+				runningCost.setText("£"+ (Integer.parseInt(runningCost.getText().toString().replaceAll("\\D+",""))+	 Integer.parseInt(item.modelName.replace(".g3db", "").replaceAll("\\D+",""))));
+
+				
+				
+			}
+		//calculate cost of room if it exists
 		
 		
 		
@@ -736,7 +747,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 
 	@Override
 	public boolean keyDown(int keycode) {
-		if(keycode == Keys.BACK || keycode == Keys.BACKSPACE){
+		if(keycode == Keys.BACK || keycode == Keys.ESCAPE){
 			((Game) Gdx.app.getApplicationListener()).setScreen(new MenuScreen());
 		}
 		return false;
@@ -759,7 +770,7 @@ public abstract class Stroke implements Screen, InputProcessor, GestureListener{
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		lastPos = new Vector2(screenX, screenY);
 		fingers++;
-		System.out.println("Fingers touching"+fingers);
+		System.out.println("Fingers touching "+fingers);
 		if (fingers == 3){
 			wait = System.nanoTime();
 			gesture();

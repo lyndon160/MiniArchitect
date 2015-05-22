@@ -1,5 +1,7 @@
 package com.LyndonFawcett.MiniArchitect.UI;
 
+import java.util.ArrayList;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,17 +19,20 @@ import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Disposable;
 
 //Contains window, table, text items, table with image and text - on click opens item
 //reads news.json for information
 public class CardWindow extends Window{
 	ScrollPane scroll;
 	Table content;
+	ArrayList<Disposable> disposables;
 	public CardWindow(Skin skin){
 		super("",skin, "chalk");
 		content = new Table(skin);
 		scroll = new ScrollPane(content, skin,"transparent");
-
+		disposables=new ArrayList<Disposable>();
+		
 		this.add(scroll);
 		scroll.setWidth(800);
 		try {
@@ -62,7 +67,10 @@ public class CardWindow extends Window{
 					Table card = new Table(skin);
 					file = Gdx.files.local("downloaded/models/"+imagepath);
 
-					card.add(new ImageButton((Drawable) new TextureRegionDrawable(new TextureRegion(new Texture(file)))));
+					Texture t = new Texture(file);
+					disposables.add(t);
+					
+					card.add(new ImageButton((Drawable) new TextureRegionDrawable(new TextureRegion(t))));
 					card.add(new Label(text+" "+price,skin,"24"));
 					content.add(card).align(Align.center).pad(10).row();
 				}
@@ -72,5 +80,13 @@ public class CardWindow extends Window{
 			e.printStackTrace();
 		}
 
+	}
+	
+	public void dispose(){
+		
+		for(Disposable d: disposables)
+			d.dispose();
+		disposables.clear();
+		
 	}
 }
