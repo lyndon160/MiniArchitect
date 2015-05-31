@@ -4,8 +4,8 @@ com.badlogic.gdx.graphics.Color: {
 	light_grey: { r: 0.8, g: 0.8, b: 0.8, a: 1 },
 	white: { r: 1, g: 1, b: 1, a: 1 },
 	red: { r: 1, a: 1 },
-	grey: { r: 0.7, g: 0.7, b: 0.7, a: 1 },
-	black: { a: 1 }
+	black: { a: 1 },
+	grey: { r: 0.7, g: 0.7, b: 0.7, a: 1 }
 },
 com.badlogic.gdx.graphics.g2d.BitmapFont: {
 	font_nixie_one_48pt_bold: { file: font_nixie_one_48pt_bold.fnt },
@@ -46,20 +46,21 @@ com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 		down: default-round-down,
 		checked: default-round-down
 	},
-	black: {
-		font: font_nixie_one_24pt_bold,
-		fontColor: { a: 1, b: 1, g: 1, r: 1 },
-		downFontColor: { a: 1 },
-		up: btn_black_glossy,
-		down: btn_white_glossy
-	},
+	32: { font: font_nixie_one_32pt_bold, up: woodcalk },
+	toggle24: { font: font_nixie_one_24pt_bold, up: woodcalk, checked: default-round-down },
 	good: {
 		font: font_nixie_one_24pt_bold,
 		fontColor: { a: 1 },
 		up: btn_army_glossy
 	},
 	list: { font: font_nixie_one_24pt_bold, up: btn_blue_glossy, down: btn_black_glossy },
-	32: { font: font_nixie_one_32pt_bold, up: woodcalk }
+	black: {
+		font: font_nixie_one_24pt_bold,
+		fontColor: { a: 1, b: 1, g: 1, r: 1 },
+		downFontColor: { a: 1 },
+		up: btn_black_glossy,
+		down: btn_white_glossy
+	}
 },
 com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
 	default: { imageUp: paint_brush, up: default-round, down: default-round-down },

@@ -1,0 +1,1 @@
+{ "textcards":[ { text:"Welcome to MiniArchitect!" }, { text:"New bedroom furniture just in!" } ], "imagecards":[ { text:"Modern wood", price:"£150", image:"bedroom.png" }, { text:"Office kit", price:"£500", image:"example.png" }, ] }
